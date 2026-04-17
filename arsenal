@@ -1,1 +1,1061 @@
+-- zxijz's skid menu v5.5 | Advanced Rage & ESP Update (LinoriaLib)
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UIS = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
+local HttpService = game:GetService("HttpService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local Camera = workspace.CurrentCamera
+local LP = Players.LocalPlayer
+local mouse = LP:GetMouse()
+
+-- ═══════════════════════════════════════════════════════════
+-- LOADER & LINORIALIB
+-- ═══════════════════════════════════════════════════════════
+local LoaderGui = Instance.new("ScreenGui")
+LoaderGui.Name = "zxijz_loader"
+LoaderGui.ResetOnSpawn = false
+LoaderGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+LoaderGui.Parent = CoreGui
+
+local LoaderFrame = Instance.new("Frame")
+LoaderFrame.Size = UDim2.new(0, 400, 0, 200)
+LoaderFrame.Position = UDim2.new(0.5, -200, 0.5, -100)
+LoaderFrame.BackgroundColor3 = Color3.fromRGB(6, 4, 14)
+LoaderFrame.BackgroundTransparency = 0.1
+LoaderFrame.BorderSizePixel = 0
+LoaderFrame.Parent = LoaderGui
+Instance.new("UICorner", LoaderFrame).CornerRadius = UDim.new(0, 14)
+
+local LoaderTitle = Instance.new("TextLabel")
+LoaderTitle.Size = UDim2.new(1, 0, 0, 40)
+LoaderTitle.Position = UDim2.new(0, 0, 0, 10)
+LoaderTitle.BackgroundTransparency = 1
+LoaderTitle.Font = Enum.Font.GothamBold
+LoaderTitle.TextColor3 = Color3.fromRGB(220, 160, 255)
+LoaderTitle.TextSize = 20
+LoaderTitle.Text = "zxijz skid loader v5.5"
+LoaderTitle.Parent = LoaderFrame
+
+local ProgressBar = Instance.new("Frame")
+ProgressBar.Size = UDim2.new(0.8, 0, 0, 10)
+ProgressBar.Position = UDim2.new(0.1, 0, 0, 120)
+ProgressBar.BackgroundColor3 = Color3.fromRGB(22, 12, 44)
+ProgressBar.BorderSizePixel = 0
+ProgressBar.Parent = LoaderFrame
+Instance.new("UICorner", ProgressBar).CornerRadius = UDim.new(1, 0)
+
+local ProgressFill = Instance.new("Frame")
+ProgressFill.Size = UDim2.new(0, 0, 1, 0)
+ProgressFill.BackgroundColor3 = Color3.fromRGB(140, 40, 255)
+ProgressFill.BorderSizePixel = 0
+ProgressFill.Parent = ProgressBar
+Instance.new("UICorner", ProgressFill).CornerRadius = UDim.new(1, 0)
+
+local ProgressText = Instance.new("TextLabel")
+ProgressText.Size = UDim2.new(1, 0, 0, 20)
+ProgressText.Position = UDim2.new(0, 0, 0, 140)
+ProgressText.BackgroundTransparency = 1
+ProgressText.Font = Enum.Font.Gotham
+ProgressText.TextColor3 = Color3.fromRGB(200, 160, 255)
+ProgressText.TextSize = 14
+ProgressText.Text = "Loading... 0%"
+ProgressText.Parent = LoaderFrame
+
+local function updateProgress(percent, text)
+    ProgressFill.Size = UDim2.new(percent / 100, 0, 1, 0)
+    ProgressText.Text = text .. " " .. math.floor(percent) .. "%"
+end
+
+LoaderFrame.Position = UDim2.new(0.5, -200, 0.5, -200)
+local tweenService = game:GetService("TweenService")
+local enterTween = tweenService:Create(LoaderFrame, TweenInfo.new(0.5, Enum.EasingStyle.Quart, Enum.EasingDirection.Out), {Position = UDim2.new(0.5, -200, 0.5, -100)})
+enterTween:Play()
+
+updateProgress(10, "Initializing...")
+task.wait(0.2)
+updateProgress(20, "Loading LinoriaLib...")
+
+local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
+local function loadRemote(path)
+    local ok, body = pcall(function() return game:HttpGet(repo .. path, true) end)
+    if not ok or type(body) ~= 'string' or body:match('^%s*<') then return nil end
+    local fn = loadstring(body)
+    if not fn then return nil end
+    local s, result = pcall(fn)
+    return s and result or nil
+end
+
+local Library = loadRemote('Library.lua')
+local ThemeManager = loadRemote('addons/ThemeManager.lua')
+local SaveManager = loadRemote('addons/SaveManager.lua')
+if not Library then updateProgress(100, 'Library failed to load'); return end
+
+updateProgress(60, "Creating GUI...")
+task.wait(0.2)
+
+local Window = Library:CreateWindow({
+    Title = "zxijz skid menu v5.5 | Advanced Edition",
+    Center = true,
+    AutoShow = false,
+})
+
+local Tabs = {
+    Aimbot = Window:AddTab('Aimbot'),
+    Rage = Window:AddTab('Rage'),
+    ESP = Window:AddTab('ESP'),
+    Visuals = Window:AddTab('Visuals'),
+    Misc = Window:AddTab('Misc'),
+    Advanced = Window:AddTab('Advanced'),
+    Config = Window:AddTab('Config'),
+}
+
+-- ═══════════════════════════════════════════════════════════
+-- CONFIG (ALL OFF BY DEFAULT)
+-- ═══════════════════════════════════════════════════════════
+local CFG = {
+    -- ESP
+    esp_on=false, esp_team=true, esp_visible=false,
+    esp_box_col=Color3.fromRGB(180,60,255), esp_name_col=Color3.fromRGB(255,255,255),
+    esp_hp_bar_on=false, esp_hp_text_on=false, esp_thick=1.5,
+    esp_dist_on=false, esp_skel_on=false,
+    esp_skel_col=Color3.fromRGB(200,100,255), esp_skel_thick=1.0,
+    snap_on=false, snap_col=Color3.fromRGB(180,60,255), snap_thick=1.0,
+    
+    -- Aimbot
+    ab_on=false, ab_hard_lock=false, ab_fov=150, ab_smooth=0.12, ab_max_speed=180,
+    ab_predict=false, ab_predmult=0.075, ab_team=true, ab_visible=false,
+    ab_showfov=false, ab_part="Head", ab_jitter=false, ab_jitter_mag=0.8,
+    ab_snap_thresh=30, ab_hold_key=false, ab_axis_x=true, ab_axis_y=true,
+    ab_priority="crosshair", ab_pinned=nil,
+    
+    -- Triggerbot
+    tb_on=false, tb_delay=0, tb_team=true, tb_visible=true,
+    
+    -- Silent Aim
+    sa_on=false, sa_fov=9999, sa_team=true, sa_hitpct=100, sa_headpct=90, sa_predmult=0.075,
+    
+    -- Rage
+    rage_strafe_on=false, rage_strafe_range=15, rage_strafe_speed=5,
+    rage_auto_shoot=false, rage_kill_all=false,
+    
+    -- Visuals
+    show_keybinds=false,
+    hb_on=false, hb_size=4, hb_vis=false,
+    ch_on=false, ch_size=26, ch_thick=2.5, ch_rot_speed=2.2, ch_hue_speed=0.45,
+    fov_on=false, fov_val=90, fullbright_on=false, nofog_on=false,
+    thirdperson_on=false, thirdperson_dist=12,
+    
+    -- Movement & Misc
+    fly_on=false, fly_speed=60,
+    nc_on=false, nc_floor_safe=true,
+    aa_on=false, aa_mode="spin", aa_spin_speed=8, aa_jitter_mag=25, aa_static_yaw=180,
+    spd_on=false, spd_val=16,
+    jp_on=false, jp_val=50,
+    
+    -- Advanced
+    inf_ammo_on=false, no_recoil_on=false, rapid_fire_on=false, rapid_fire_rate=5,
+    bhop_on=false, inf_jump_on=false, wallbang_on=false, kill_aura_on=false, kill_aura_range=15,
+}
+
+local cfgFolderPath = "zxijz skid menu/cfg"
+local cfgFilePath = cfgFolderPath .. "/zxijz_cfg.json"
+local function initializeFolders()
+    if not isfolder then return end
+    if not isfolder("zxijz skid menu") then makefolder("zxijz skid menu") end
+    if not isfolder(cfgFolderPath) then makefolder(cfgFolderPath) end
+end
+
+if readfile then
+    pcall(function()
+        local raw = readfile(cfgFilePath)
+        local t = HttpService:JSONDecode(raw)
+        for k,v in pairs(t) do
+            if CFG[k]~=nil and type(CFG[k])==type(v) then CFG[k]=v end
+        end
+    end)
+end
+
+-- ═══════════════════════════════════════════════════════════
+-- BUILD GUI ELEMENTS
+-- ═══════════════════════════════════════════════════════════
+-- AIMBOT TAB
+local AimbotGroup = Tabs.Aimbot:AddLeftGroupbox('Targeting')
+AimbotGroup:AddToggle('Aimbot', {Text = 'Aimbot', Default = CFG.ab_on}):OnChanged(function(v) CFG.ab_on = v end)
+AimbotGroup:AddToggle('HardLock', {Text = 'Hard Lock (No Smoothing)', Default = CFG.ab_hard_lock}):OnChanged(function(v) CFG.ab_hard_lock = v end)
+AimbotGroup:AddToggle('Hold RMB', {Text = 'Hold RMB to Aim', Default = CFG.ab_hold_key}):OnChanged(function(v) CFG.ab_hold_key = v end)
+AimbotGroup:AddToggle('Team Check', {Text = 'Team Check', Default = CFG.ab_team}):OnChanged(function(v) CFG.ab_team = v end)
+AimbotGroup:AddToggle('Visible Check', {Text = 'Visible Check', Default = CFG.ab_visible}):OnChanged(function(v) CFG.ab_visible = v end)
+AimbotGroup:AddToggle('Prediction', {Text = 'Velocity Prediction', Default = CFG.ab_predict}):OnChanged(function(v) CFG.ab_predict = v end)
+AimbotGroup:AddDropdown('Aim Part', {Values = {'Head','UpperTorso','Torso','HumanoidRootPart'}, Default = 1}):OnChanged(function(v) CFG.ab_part = v end)
+
+local AimbotSmoothGroup = Tabs.Aimbot:AddRightGroupbox('Smoothing & FOV')
+AimbotSmoothGroup:AddSlider('Smooth', {Text = 'Smooth Factor', Default = math.floor(CFG.ab_smooth*100), Min = 1, Max = 99, Rounding = 0}):OnChanged(function(v) CFG.ab_smooth = v/100 end)
+AimbotSmoothGroup:AddSlider('Max Speed', {Text = 'Max Aim Speed', Default = CFG.ab_max_speed, Min = 10, Max = 360, Rounding = 0}):OnChanged(function(v) CFG.ab_max_speed = v end)
+AimbotSmoothGroup:AddSlider('FOV', {Text = 'FOV Radius', Default = CFG.ab_fov, Min = 10, Max = 500, Rounding = 0}):OnChanged(function(v) CFG.ab_fov = v end)
+AimbotSmoothGroup:AddToggle('Show FOV', {Text = 'Show FOV Circle', Default = CFG.ab_showfov}):OnChanged(function(v) CFG.ab_showfov = v end)
+
+local TriggerbotGroup = Tabs.Aimbot:AddLeftGroupbox('Triggerbot')
+TriggerbotGroup:AddToggle('Triggerbot', {Text = 'Triggerbot [CapsLock]', Default = CFG.tb_on}):OnChanged(function(v) CFG.tb_on = v end)
+TriggerbotGroup:AddToggle('TB Team Check', {Text = 'Team Check', Default = CFG.tb_team}):OnChanged(function(v) CFG.tb_team = v end)
+TriggerbotGroup:AddSlider('TB Delay', {Text = 'Trigger Delay (ms)', Default = CFG.tb_delay, Min = 0, Max = 300, Rounding = 0}):OnChanged(function(v) CFG.tb_delay = v end)
+
+local SilentAimGroup = Tabs.Aimbot:AddRightGroupbox('Silent Aim (Arsenal)')
+SilentAimGroup:AddToggle('Silent Aim', {Text = 'Silent Aim', Default = CFG.sa_on}):OnChanged(function(v) CFG.sa_on = v end)
+SilentAimGroup:AddToggle('SA Team Check', {Text = 'Team Check', Default = CFG.sa_team}):OnChanged(function(v) CFG.sa_team = v end)
+SilentAimGroup:AddSlider('SA Hit %', {Text = 'SA Hit %', Default = CFG.sa_hitpct, Min = 1, Max = 100, Rounding = 0}):OnChanged(function(v) CFG.sa_hitpct = v end)
+SilentAimGroup:AddSlider('SA Head %', {Text = 'SA Head %', Default = CFG.sa_headpct, Min = 0, Max = 100, Rounding = 0}):OnChanged(function(v) CFG.sa_headpct = v end)
+
+-- RAGE TAB
+local RageGroup = Tabs.Rage:AddLeftGroupbox('Rage Features')
+RageGroup:AddToggle('RageStrafe', {Text = 'Combat Strafe (Teleport Around)', Default = CFG.rage_strafe_on}):OnChanged(function(v) CFG.rage_strafe_on = v end)
+RageGroup:AddSlider('StrafeRange', {Text = 'Strafe Radius (Studs)', Default = CFG.rage_strafe_range, Min = 5, Max = 30, Rounding = 0}):OnChanged(function(v) CFG.rage_strafe_range = v end)
+RageGroup:AddSlider('StrafeSpeed', {Text = 'Strafe Speed', Default = CFG.rage_strafe_speed, Min = 1, Max = 20, Rounding = 0}):OnChanged(function(v) CFG.rage_strafe_speed = v end)
+RageGroup:AddToggle('AutoShoot', {Text = 'Auto-Shoot Visible Targets', Default = CFG.rage_auto_shoot}):OnChanged(function(v) CFG.rage_auto_shoot = v end)
+
+local WipeGroup = Tabs.Rage:AddRightGroupbox('Server Wipe')
+WipeGroup:AddToggle('KillAll', {Text = 'Teleport Behind All (Kill All)', Default = CFG.rage_kill_all}):OnChanged(function(v) CFG.rage_kill_all = v end)
+
+-- ESP TAB
+local ESPBoxGroup = Tabs.ESP:AddLeftGroupbox('ESP Settings')
+ESPBoxGroup:AddToggle('Box ESP', {Text = 'Box ESP', Default = CFG.esp_on}):OnChanged(function(v) CFG.esp_on = v end)
+ESPBoxGroup:AddToggle('HPBar', {Text = 'Show Health Bar', Default = CFG.esp_hp_bar_on}):OnChanged(function(v) CFG.esp_hp_bar_on = v end)
+ESPBoxGroup:AddToggle('HPText', {Text = 'Show Health Text', Default = CFG.esp_hp_text_on}):OnChanged(function(v) CFG.esp_hp_text_on = v end)
+ESPBoxGroup:AddToggle('Distance Label', {Text = 'Show Distance (Bottom)', Default = CFG.esp_dist_on}):OnChanged(function(v) CFG.esp_dist_on = v end)
+ESPBoxGroup:AddToggle('Team Check', {Text = 'Team Check', Default = CFG.esp_team}):OnChanged(function(v) CFG.esp_team = v end)
+
+local ESPSkelGroup = Tabs.ESP:AddRightGroupbox('Extras')
+ESPSkelGroup:AddToggle('Skeleton', {Text = 'Skeleton ESP', Default = CFG.esp_skel_on}):OnChanged(function(v) CFG.esp_skel_on = v end)
+ESPSkelGroup:AddToggle('Snap Lines', {Text = 'Snap Lines', Default = CFG.snap_on}):OnChanged(function(v) CFG.snap_on = v end)
+
+-- VISUALS TAB
+local VisualsWorldGroup = Tabs.Visuals:AddLeftGroupbox('World & Crosshair')
+VisualsWorldGroup:AddToggle('Crosshair', {Text = 'Custom Crosshair', Default = CFG.ch_on}):OnChanged(function(v) CFG.ch_on = v end)
+VisualsWorldGroup:AddToggle('KeybindUI', {Text = 'Show Keybinds UI', Default = CFG.show_keybinds}):OnChanged(function(v) 
+    CFG.show_keybinds = v
+    if CoreGui:FindFirstChild("zxijz_keybinds") then
+        CoreGui.zxijz_keybinds.Enabled = v
+    end
+end)
+VisualsWorldGroup:AddToggle('FOV Override', {Text = 'FOV Override', Default = CFG.fov_on}):OnChanged(function(v) CFG.fov_on = v end)
+VisualsWorldGroup:AddSlider('FOV Val', {Text = 'FOV Value', Default = CFG.fov_val, Min = 50, Max = 120, Rounding = 0}):OnChanged(function(v) CFG.fov_val = v end)
+VisualsWorldGroup:AddToggle('Fullbright', {Text = 'Fullbright', Default = CFG.fullbright_on}):OnChanged(function(v) CFG.fullbright_on = v end)
+
+-- MISC TAB
+local MiscMovementGroup = Tabs.Misc:AddLeftGroupbox('Movement')
+MiscMovementGroup:AddToggle('Fly', {Text = 'Fly [F]', Default = CFG.fly_on}):OnChanged(function(v) CFG.fly_on = v end)
+MiscMovementGroup:AddSlider('Fly Speed', {Text = 'Fly Speed', Default = CFG.fly_speed, Min = 10, Max = 200, Rounding = 0}):OnChanged(function(v) CFG.fly_speed = v end)
+MiscMovementGroup:AddToggle('Noclip', {Text = 'Noclip [V]', Default = CFG.nc_on}):OnChanged(function(v) CFG.nc_on = v end)
+MiscMovementGroup:AddToggle('Speed Hack', {Text = 'Speed Hack', Default = CFG.spd_on}):OnChanged(function(v) CFG.spd_on = v end)
+MiscMovementGroup:AddSlider('Walk Speed', {Text = 'Walk Speed', Default = CFG.spd_val, Min = 16, Max = 100, Rounding = 0}):OnChanged(function(v) CFG.spd_val = v end)
+MiscMovementGroup:AddToggle('Jump Power', {Text = 'Jump Power Override', Default = CFG.jp_on}):OnChanged(function(v) CFG.jp_on = v end)
+MiscMovementGroup:AddSlider('Jump Power Val', {Text = 'Jump Power', Default = CFG.jp_val, Min = 50, Max = 300, Rounding = 0}):OnChanged(function(v) CFG.jp_val = v end)
+
+local MiscAAGroup = Tabs.Misc:AddRightGroupbox('Anti-Aim & Camera')
+MiscAAGroup:AddToggle('Anti-Aim', {Text = 'Anti-Aim [H]', Default = CFG.aa_on}):OnChanged(function(v) CFG.aa_on = v end)
+MiscAAGroup:AddDropdown('AA Mode', {Values = {'spin','jitter','static'}, Default = 1}):OnChanged(function(v) CFG.aa_mode = v end)
+MiscAAGroup:AddSlider('Spin Speed', {Text = 'Spin Speed', Default = CFG.aa_spin_speed, Min = 1, Max = 30, Rounding = 0}):OnChanged(function(v) CFG.aa_spin_speed = v end)
+
+-- ADVANCED TAB
+local AdvWeaponsGroup = Tabs.Advanced:AddLeftGroupbox('Weapon Mods (Arsenal)')
+AdvWeaponsGroup:AddToggle('Inf Ammo', {Text = 'Infinite Ammo', Default = CFG.inf_ammo_on}):OnChanged(function(v) CFG.inf_ammo_on = v end)
+AdvWeaponsGroup:AddToggle('No Recoil', {Text = 'No Recoil / Spread', Default = CFG.no_recoil_on}):OnChanged(function(v) CFG.no_recoil_on = v end)
+AdvWeaponsGroup:AddToggle('Rapid Fire', {Text = 'Rapid Fire', Default = CFG.rapid_fire_on}):OnChanged(function(v) CFG.rapid_fire_on = v end)
+AdvWeaponsGroup:AddToggle('Wallbang', {Text = 'Auto-Wallbang', Default = CFG.wallbang_on}):OnChanged(function(v) CFG.wallbang_on = v end)
+
+local AdvExploitsGroup = Tabs.Advanced:AddRightGroupbox('Exploits')
+AdvExploitsGroup:AddToggle('Bhop', {Text = 'Bhop (Hold Space)', Default = CFG.bhop_on}):OnChanged(function(v) CFG.bhop_on = v end)
+AdvExploitsGroup:AddToggle('Inf Jump', {Text = 'Infinite Jump', Default = CFG.inf_jump_on}):OnChanged(function(v) CFG.inf_jump_on = v end)
+
+-- CONFIG TAB
+local ConfigSaveGroup = Tabs.Config:AddLeftGroupbox('Save / Load')
+ConfigSaveGroup:AddButton('Save Config', function()
+    if not writefile then return end
+    initializeFolders()
+    local t={} for k,v in pairs(CFG) do if type(v)~="userdata" and type(v)~="function" then t[k]=v end end
+    pcall(function() writefile(cfgFilePath, HttpService:JSONEncode(t)) end)
+end)
+ConfigSaveGroup:AddButton('Load Config', function()
+    if not readfile then return end
+    pcall(function() 
+        local raw = readfile(cfgFilePath) 
+        local t = HttpService:JSONDecode(raw) 
+        for k,v in pairs(t) do if CFG[k]~=nil and type(CFG[k])==type(v) then CFG[k]=v end end 
+    end)
+end)
+
+updateProgress(100, "Done!")
+task.wait(0.2)
+LoaderGui:Destroy()
+Library:Toggle()
+
+ThemeManager:SetLibrary(Library)
+SaveManager:SetLibrary(Library)
+SaveManager:SetFolder('zxijz skid menu/cfg/ui-specific')
+SaveManager:BuildConfigSection(Tabs.Config)
+ThemeManager:ApplyToTab(Tabs.Config)
+
+-- ═══════════════════════════════════════════════════════════
+-- KEYBINDS UI OVERLAY
+-- ═══════════════════════════════════════════════════════════
+local KeybindsGui = Instance.new("ScreenGui")
+KeybindsGui.Name = "zxijz_keybinds"
+KeybindsGui.ResetOnSpawn = false
+KeybindsGui.Enabled = CFG.show_keybinds
+KeybindsGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+KeybindsGui.Parent = CoreGui
+
+local KeybindsFrame = Instance.new("Frame")
+KeybindsFrame.Size = UDim2.new(0, 200, 0, 220)
+KeybindsFrame.Position = UDim2.new(0, 10, 0.5, -110)
+KeybindsFrame.BackgroundColor3 = Color3.fromRGB(16, 10, 32)
+KeybindsFrame.BackgroundTransparency = 0.2
+KeybindsFrame.BorderSizePixel = 0
+KeybindsFrame.Parent = KeybindsGui
+Instance.new("UICorner", KeybindsFrame).CornerRadius = UDim.new(0, 8)
+local kStroke = Instance.new("UIStroke", KeybindsFrame)
+kStroke.Color = Color3.fromRGB(140, 40, 255); kStroke.Thickness = 1
+
+local KeybindsTitle = Instance.new("TextLabel")
+KeybindsTitle.Size = UDim2.new(1, 0, 0, 30)
+KeybindsTitle.BackgroundTransparency = 1
+KeybindsTitle.Font = Enum.Font.GothamBold
+KeybindsTitle.TextColor3 = Color3.fromRGB(220, 160, 255)
+KeybindsTitle.TextSize = 14
+KeybindsTitle.Text = "Keybinds"
+KeybindsTitle.Parent = KeybindsFrame
+
+local KeybindsList = Instance.new("Frame")
+KeybindsList.Size = UDim2.new(1, -10, 1, -40)
+KeybindsList.Position = UDim2.new(0, 5, 0, 35)
+KeybindsList.BackgroundTransparency = 1
+KeybindsList.Parent = KeybindsFrame
+local KeybindsLayout = Instance.new("UIListLayout", KeybindsList)
+KeybindsLayout.Padding = UDim.new(0, 5)
+
+local keybindLabels = {}
+local function addKeybindLabel(text, toggle)
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, 0, 0, 20)
+    label.BackgroundTransparency = 1
+    label.Font = Enum.Font.Gotham
+    label.TextSize = 12
+    label.Text = text
+    label.Parent = KeybindsList
+    if toggle ~= nil then keybindLabels[toggle] = label end
+end
+
+addKeybindLabel("RShift: Menu", nil)
+addKeybindLabel("F: Fly", "fly_on")
+addKeybindLabel("V: Noclip", "nc_on")
+addKeybindLabel("H: Anti-Aim", "aa_on")
+addKeybindLabel("CapsLock: Triggerbot", "tb_on")
+
+local function updateKeybindsUI()
+    for toggle, label in pairs(keybindLabels) do
+        if toggle then
+            local isOn = CFG[toggle]
+            label.TextColor3 = isOn and Color3.fromRGB(80, 255, 120) or Color3.fromRGB(255, 80, 80)
+            label.Text = label.Text:gsub(" %[ON%]", ""):gsub(" %[OFF%]", "") .. (isOn and " [ON]" or " [OFF]")
+        end
+    end
+end
+
+-- ═══════════════════════════════════════════════════════════
+-- MATH / UTIL ALIASES
+-- ═══════════════════════════════════════════════════════════
+local V3, V2, CF = Vector3.new, Vector2.new, CFrame.new
+local mfl, mcl = math.floor, math.clamp
+local mra, mco, msi = math.random, math.cos, math.sin
+local huge = math.huge
+
+local function isVisible(part)
+  local origin = Camera.CFrame.Position
+  local dir    = (part.Position - origin)
+  local ray    = Ray.new(origin, dir)
+  local hit    = workspace:FindPartOnRayWithIgnoreList(ray,{LP.Character,Camera},false,true)
+  return not hit or Players:GetPlayerFromCharacter(hit.Parent)~=nil or Players:GetPlayerFromCharacter(hit.Parent.Parent)~=nil
+end
+
+local function rot2(x,y,a)
+  local c,s=mco(a),msi(a); return x*c-y*s, x*s+y*c
+end
+local function sv(x,y,cx,cy) return V2(cx+x,cy+y) end
+
+local function newLine(thick,col)
+  local l=Drawing.new("Line")
+  l.Thickness=thick or 1; l.Color=col or Color3.new(1,1,1)
+  l.Visible=false; l.ZIndex=5; return l
+end
+
+local function newText(size,col)
+  local t=Drawing.new("Text")
+  t.Size=size or 13; t.Color=col or Color3.new(1,1,1)
+  t.Visible=false; t.Outline=true; t.ZIndex=6; return t
+end
+
+-- ═══════════════════════════════════════════════════════════
+-- ESP POOL (UPDATED HP BAR)
+-- ═══════════════════════════════════════════════════════════
+local BONE_PAIRS={
+  {"Head","UpperTorso"},{"UpperTorso","LowerTorso"},
+  {"UpperTorso","LeftUpperArm"},{"LeftUpperArm","LeftLowerArm"},{"LeftLowerArm","LeftHand"},
+  {"UpperTorso","RightUpperArm"},{"RightUpperArm","RightLowerArm"},{"RightLowerArm","RightHand"},
+  {"LowerTorso","LeftUpperLeg"},{"LeftUpperLeg","LeftLowerLeg"},{"LeftLowerLeg","LeftFoot"},
+  {"LowerTorso","RightUpperLeg"},{"RightUpperLeg","RightLowerLeg"},{"RightLowerLeg","RightFoot"},
+}
+
+local espPool={}
+local function getESPEntry(plr)
+  if espPool[plr] then return espPool[plr] end
+  local e={
+    lines={}, nameText=newText(12,CFG.esp_name_col),
+    hpText=newText(11,CFG.esp_hp_col), distText=newText(10,Color3.fromRGB(160,120,220)),
+    snapLine=newLine(CFG.snap_thick,CFG.snap_col), skelLines={}, selBoxes={},
+    hpBarBg=newLine(3, Color3.new(0,0,0)), hpBarFill=newLine(1, Color3.new(0,1,0))
+  }
+  for i=1,4 do e.lines[i]=newLine(CFG.esp_thick,CFG.esp_box_col) end
+  for i=1,#BONE_PAIRS do e.skelLines[i]=newLine(CFG.esp_skel_thick,CFG.esp_skel_col) end
+  espPool[plr]=e; return e
+end
+
+local function hideESP(e)
+  for _,l in ipairs(e.lines) do l.Visible=false end
+  for _,l in ipairs(e.skelLines) do l.Visible=false end
+  e.nameText.Visible=false; e.hpText.Visible=false
+  e.distText.Visible=false; e.snapLine.Visible=false
+  e.hpBarBg.Visible=false; e.hpBarFill.Visible=false
+end
+
+local function cleanESP(plr)
+  if not espPool[plr] then return end
+  hideESP(espPool[plr])
+  for _,sb in pairs(espPool[plr].selBoxes) do
+    if sb and sb.Parent then sb:Destroy() end
+  end
+  espPool[plr]=nil
+end
+Players.PlayerRemoving:Connect(cleanESP)
+
+local function getCharBox(char)
+  local root=char:FindFirstChild("HumanoidRootPart")
+  if not root then return nil end
+  local hum=char:FindFirstChildOfClass("Humanoid")
+  local topPos=root.Position+V3(0,3.2,0)
+  local botPos=root.Position-V3(0,3.0,0)
+  local sp,onScreen=Camera:WorldToViewportPoint(root.Position)
+  if not onScreen or sp.Z<0 then return nil end
+  local top2d,onT=Camera:WorldToViewportPoint(topPos)
+  local bot2d,onB=Camera:WorldToViewportPoint(botPos)
+  if not onT or not onB then return nil end
+  local boxH=math.abs(top2d.Y-bot2d.Y)
+  if boxH<4 then return nil end
+  local boxW=boxH*0.5
+  local cx=sp.X
+  local ty=top2d.Y; local by_=bot2d.Y
+  local hp=hum and hum.Health or 0
+  local maxhp=hum and hum.MaxHealth or 100
+  return {
+    tl=V2(cx-boxW*0.5,ty), tr=V2(cx+boxW*0.5,ty),
+    bl=V2(cx-boxW*0.5,by_), br=V2(cx+boxW*0.5,by_),
+    cx=cx, hpPct=mcl(hp/math.max(maxhp,1),0,1), hp=mfl(hp),
+    bot=V2(cx,by_),
+    dist=mfl((root.Position-Camera.CFrame.Position).Magnitude),
+  }
+end
+
+local function drawSkeleton(char,skelLines)
+  local isR15=char:FindFirstChild("UpperTorso")~=nil
+  local first=isR15 and 1 or 15; local last=isR15 and 14 or 19
+  for i=1,#BONE_PAIRS do skelLines[i].Visible=false end
+  if not CFG.esp_skel_on then return end
+  for i=first,last do
+    local pair=BONE_PAIRS[i]
+    local pA=char:FindFirstChild(pair[1])
+    local pB=char:FindFirstChild(pair[2])
+    if pA and pB then
+      local a2,onA=Camera:WorldToViewportPoint(pA.Position)
+      local b2,onB=Camera:WorldToViewportPoint(pB.Position)
+      if onA and onB and a2.Z>0 and b2.Z>0 then
+        local sl=skelLines[i]
+        sl.From=V2(a2.X,a2.Y); sl.To=V2(b2.X,b2.Y)
+        sl.Color=CFG.esp_skel_col; sl.Visible=true
+      end
+    end
+  end
+end
+
+-- ═══════════════════════════════════════════════════════════
+-- HITBOX EXPANDER
+-- ═══════════════════════════════════════════════════════════
+local hbFolder=Instance.new("Folder")
+hbFolder.Name="zxijz_hbvis"; hbFolder.Parent=workspace
+local hbParts={}
+
+local function updateHitboxes()
+  for _,plr in ipairs(Players:GetPlayers()) do
+    if plr==LP then continue end
+    task.spawn(function()
+      local char=plr.Character
+      if not char then return end
+      local root=char:FindFirstChild("HumanoidRootPart")
+      if not root then return end
+      if CFG.hb_on then
+        if not hbParts[plr] or not hbParts[plr].Parent then
+          local p=Instance.new("Part")
+          p.Name="zxijz_hb"
+          p.Size=V3(CFG.hb_size,CFG.hb_size,CFG.hb_size)
+          p.Transparency=1; p.CanCollide=false; p.Anchored=false; p.CastShadow=false; p.Parent=char
+          local weld=Instance.new("WeldConstraint")
+          weld.Part0=root; weld.Part1=p; weld.Parent=p
+          hbParts[plr]=p
+        else
+          hbParts[plr].Size=V3(CFG.hb_size,CFG.hb_size,CFG.hb_size)
+        end
+        local e=espPool[plr]
+        if CFG.hb_vis and e then
+          local hp=hbParts[plr]
+          if hp and not e.selBoxes[hp] then
+            local sb=Instance.new("SelectionBox")
+            sb.Adornee=hp; sb.Color3=Color3.fromRGB(160,80,255); sb.LineThickness=0.04
+            sb.SurfaceTransparency=0.7; sb.SurfaceColor3=Color3.fromRGB(140,40,255)
+            sb.Parent=hbFolder; e.selBoxes[hp]=sb
+          end
+        elseif e then
+          for k,sb in pairs(e.selBoxes) do
+            if sb and sb.Parent then sb:Destroy() end; e.selBoxes[k]=nil
+          end
+        end
+      else
+        if hbParts[plr] and hbParts[plr].Parent then hbParts[plr]:Destroy() end
+        hbParts[plr]=nil
+        local e=espPool[plr]
+        if e then
+          for k,sb in pairs(e.selBoxes) do
+            if sb and sb.Parent then sb:Destroy() end; e.selBoxes[k]=nil
+          end
+        end
+      end
+    end)
+  end
+end
+
+local hbFrame=0
+RunService.Heartbeat:Connect(function()
+  hbFrame=hbFrame+1
+  if hbFrame%3~=0 then return end
+  if CFG.hb_on or CFG.hb_vis then updateHitboxes() end
+end)
+
+-- ═══════════════════════════════════════════════════════════
+-- TARGET SELECTION
+-- ═══════════════════════════════════════════════════════════
+local function getTarget(fovR,predMult,partName)
+  local vp=Camera.ViewportSize
+  local center=V2(vp.X*0.5,vp.Y*0.5)
+  local myTeam=LP.Team
+  local best=nil; local bestScore=huge
+  for _,plr in ipairs(Players:GetPlayers()) do
+    if plr==LP then continue end
+    if CFG.ab_team and plr.Team==myTeam then continue end
+    local char=plr.Character
+    if not char then continue end
+    local hum=char:FindFirstChildOfClass("Humanoid")
+    if not hum or hum.Health<=0 then continue end
+    local part=char:FindFirstChild(partName or CFG.ab_part) or char:FindFirstChild("HumanoidRootPart")
+    if not part then continue end
+    if CFG.ab_visible and not isVisible(part) then continue end
+    local pos=part.Position
+    if predMult and predMult>0 and CFG.ab_predict then
+      local root=char:FindFirstChild("HumanoidRootPart")
+      if root then
+        local vel=root.AssemblyLinearVelocity
+        pos=pos+V3(vel.X*predMult,vel.Y*predMult,vel.Z*predMult)
+      end
+    end
+    local sp,on=Camera:WorldToViewportPoint(pos)
+    if not on or sp.Z<0 then continue end
+    local screenDist=(V2(sp.X,sp.Y)-center).Magnitude
+    if screenDist>fovR then continue end
+    local score
+    local pri=CFG.ab_priority
+    if pri=="hp" then score=hum.Health
+    elseif pri=="distance" then score=(part.Position-Camera.CFrame.Position).Magnitude
+    elseif pri=="manual" and CFG.ab_pinned then score=(plr==CFG.ab_pinned) and -huge or screenDist
+    else score=screenDist end
+    if score<bestScore then bestScore=score; best=pos end
+  end
+  return best
+end
+
+-- ═══════════════════════════════════════════════════════════
+-- FOV CIRCLE
+-- ═══════════════════════════════════════════════════════════
+local fovCircle=Drawing.new("Circle")
+fovCircle.Color=Color3.fromRGB(160,80,255)
+fovCircle.Thickness=1
+fovCircle.Filled=false
+fovCircle.NumSides=64
+fovCircle.Visible=false
+
+-- ═══════════════════════════════════════════════════════════
+-- AIMBOT & RAGE (STRAFE + KILL ALL)
+-- ═══════════════════════════════════════════════════════════
+local strafeAngle = 0
+
+local function tickAimbot(dt)
+  -- RAGE KILL ALL (Teleports behind enemies sequentially)
+  if CFG.rage_kill_all and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+      local target = getTarget(9999, 0, "HumanoidRootPart")
+      if target then
+          LP.Character.HumanoidRootPart.CFrame = CFrame.new(target + Vector3.new(0, 0, 4), target)
+          mouse:Button1Click() -- Auto swing/shoot
+      end
+  end
+
+  if not CFG.ab_on and not CFG.rage_strafe_on then return end
+  if CFG.ab_hold_key and not UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) and not CFG.rage_strafe_on then return end
+  if not LP.Character then return end
+  local pos=getTarget(CFG.ab_fov,CFG.ab_predmult,CFG.ab_part)
+  if not pos then return end
+  
+  -- RAGE STRAFE (Teleport around target while locked on)
+  if CFG.rage_strafe_on and UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) and LP.Character:FindFirstChild("HumanoidRootPart") then
+      strafeAngle = strafeAngle + CFG.rage_strafe_speed * dt
+      local offset = Vector3.new(math.cos(strafeAngle) * CFG.rage_strafe_range, math.sin(strafeAngle * 1.5) * (CFG.rage_strafe_range/2), math.sin(strafeAngle) * CFG.rage_strafe_range)
+      LP.Character.HumanoidRootPart.CFrame = CFrame.new(pos + offset, pos)
+  end
+
+  local jx,jy=0,0
+  if CFG.ab_jitter then
+    local m=CFG.ab_jitter_mag; jx=(mra()*2-1)*m*0.01; jy=(mra()*2-1)*m*0.01
+  end
+  local camPos=Camera.CFrame.Position
+  local targetCF=CF(camPos,pos+V3(jx,jy,0))
+  
+  -- Hard Lock skips smoothing
+  if CFG.ab_hard_lock then
+      Camera.CFrame = targetCF
+      return
+  end
+  
+  if not CFG.ab_axis_x or not CFG.ab_axis_y then
+    local curCF=Camera.CFrame
+    local tx,ty,tz=targetCF:ToEulerAnglesYXZ(); local cx,cy,_=curCF:ToEulerAnglesYXZ()
+    if not CFG.ab_axis_x then ty=cy end
+    if not CFG.ab_axis_y then tx=cx end
+    targetCF=CF(camPos)*CFrame.fromEulerAnglesYXZ(tx,ty,tz)
+  end
+  local maxRad=math.rad(CFG.ab_max_speed)*dt
+  local curCF=Camera.CFrame
+  local angle=math.acos(mcl(curCF.LookVector:Dot(targetCF.LookVector),-1,1))
+  local lerpT=CFG.ab_smooth
+  if angle>maxRad then lerpT=mcl(maxRad/angle,0,lerpT) end
+  Camera.CFrame=curCF:Lerp(targetCF,lerpT)
+end
+
+-- ═══════════════════════════════════════════════════════════
+-- TRIGGERBOT & RAGE AUTO SHOOT
+-- ═══════════════════════════════════════════════════════════
+local tbLastFire=0
+
+local function tickTriggerbot()
+  if CFG.rage_auto_shoot then
+      local pos = getTarget(9999, 0, "Head")
+      if pos then mouse:Button1Click() end
+  end
+
+  if not CFG.tb_on then return end
+  local now=tick()
+  if (now-tbLastFire)<(CFG.tb_delay/1000) then return end
+  
+  -- Center screen raycast (Ensures it ONLY shoots when crosshair is exactly on the enemy)
+  local ray = Camera:ScreenPointToRay(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+  local hit = workspace:FindPartOnRayWithIgnoreList(Ray.new(ray.Origin, ray.Direction * 1000), {LP.Character})
+  
+  if hit and hit.Parent then
+      local plr = Players:GetPlayerFromCharacter(hit.Parent) or Players:GetPlayerFromCharacter(hit.Parent.Parent)
+      if plr and plr ~= LP then
+          if CFG.tb_team and plr.Team == LP.Team then return end
+          mouse:Button1Click()
+          tbLastFire = now
+      end
+  end
+end
+
+-- ═══════════════════════════════════════════════════════════
+-- ARSENAL ADVANCED WEAPON MODS (ReplicatedStorage)
+-- ═══════════════════════════════════════════════════════════
+RunService.Heartbeat:Connect(function()
+    if not ReplicatedStorage:FindFirstChild("Weapons") then return end
+    
+    for _, weapon in ipairs(ReplicatedStorage.Weapons:GetChildren()) do
+        if CFG.inf_ammo_on then
+            if weapon:FindFirstChild("Ammo") then weapon.Ammo.Value = 999 end
+            if weapon:FindFirstChild("MaxAmmo") then weapon.MaxAmmo.Value = 999 end
+        end
+        if CFG.rapid_fire_on and weapon:FindFirstChild("FireRate") then
+            weapon.FireRate.Value = 1 / CFG.rapid_fire_rate
+        end
+        if CFG.no_recoil_on then
+            if weapon:FindFirstChild("RecoilControl") then weapon.RecoilControl.Value = 0 end
+            if weapon:FindFirstChild("Spread") then weapon.Spread.Value = 0 end
+        end
+        if CFG.wallbang_on and weapon:FindFirstChild("Penetration") then
+            weapon.Penetration.Value = 999
+        end
+    end
+end)
+
+-- ═══════════════════════════════════════════════════════════
+-- FLY 
+-- ═══════════════════════════════════════════════════════════
+local flyBV=nil; local flyConn=nil
+local function flyStop()
+  if flyConn then flyConn:Disconnect(); flyConn=nil end
+  if flyBV and flyBV.Parent then flyBV.Velocity=V3(0,0,0); flyBV:Destroy(); flyBV=nil end
+  local char=LP.Character
+  if char then local hum=char:FindFirstChildOfClass("Humanoid"); if hum then hum.PlatformStand=false end end
+end
+
+local function flyStart()
+  flyStop()
+  local char=LP.Character; if not char then return end
+  local root=char:FindFirstChild("HumanoidRootPart")
+  local hum=char:FindFirstChildOfClass("Humanoid")
+  if not root or not hum then return end
+  flyBV=Instance.new("BodyVelocity"); flyBV.Velocity=V3(0,0,0); flyBV.MaxForce=V3(1e5,1e5,1e5); flyBV.Parent=root
+  hum.PlatformStand=true
+  flyConn=RunService.Heartbeat:Connect(function()
+    if not CFG.fly_on then flyStop(); return end
+    if not flyBV or not flyBV.Parent then return end
+    local spd=CFG.fly_speed; local camCF=Camera.CFrame; local vx,vy,vz=0,0,0
+    if UIS:IsKeyDown(Enum.KeyCode.W) then local lv=camCF.LookVector; vx=vx+lv.X*spd; vy=vy+lv.Y*spd; vz=vz+lv.Z*spd end
+    if UIS:IsKeyDown(Enum.KeyCode.S) then local lv=camCF.LookVector; vx=vx-lv.X*spd; vy=vy-lv.Y*spd; vz=vz-lv.Z*spd end
+    if UIS:IsKeyDown(Enum.KeyCode.A) then local rv=camCF.RightVector; vx=vx-rv.X*spd; vy=vy-rv.Y*spd; vz=vz-rv.Z*spd end
+    if UIS:IsKeyDown(Enum.KeyCode.D) then local rv=camCF.RightVector; vx=vx+rv.X*spd; vy=vy+rv.Y*spd; vz=vz+rv.Z*spd end
+    if UIS:IsKeyDown(Enum.KeyCode.Space) then vy=vy+spd end
+    if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then vy=vy-spd end
+    flyBV.Velocity=V3(vx,vy,vz)
+  end)
+end
+
+local flyWasOn=false
+task.spawn(function()
+  while true do
+    task.wait(0.1)
+    if CFG.fly_on and not flyWasOn then flyStart(); flyWasOn=true
+    elseif not CFG.fly_on and flyWasOn then flyStop(); flyWasOn=false end
+  end
+end)
+LP.CharacterAdded:Connect(function() task.wait(0.5); flyWasOn=false; if CFG.fly_on then flyStart(); flyWasOn=true end end)
+
+-- ═══════════════════════════════════════════════════════════
+-- NOCLIP
+-- ═══════════════════════════════════════════════════════════
+local ncConn=nil
+local function noclipStart()
+  if ncConn then return end
+  ncConn=RunService.Stepped:Connect(function()
+    local char=LP.Character; if not char then return end
+    for _,part in ipairs(char:GetDescendants()) do
+      if part:IsA("BasePart") then
+        if CFG.nc_floor_safe and part.Name=="HumanoidRootPart" then part.CanCollide=true else part.CanCollide=false end
+      end
+    end
+  end)
+end
+
+local function noclipStop()
+  if ncConn then ncConn:Disconnect(); ncConn=nil end
+  local char=LP.Character; if not char then return end
+  for _,part in ipairs(char:GetDescendants()) do if part:IsA("BasePart") then part.CanCollide=true end end
+end
+
+local ncWasOn=false
+task.spawn(function()
+  while true do
+    task.wait(0.1)
+    if CFG.nc_on and not ncWasOn then noclipStart(); ncWasOn=true
+    elseif not CFG.nc_on and ncWasOn then noclipStop(); ncWasOn=false end
+  end
+end)
+LP.CharacterAdded:Connect(function() task.wait(0.5); if CFG.nc_on then noclipStart() end end)
+
+-- ═══════════════════════════════════════════════════════════
+-- ANTI-AIM 
+-- ═══════════════════════════════════════════════════════════
+local aaAngle=0; local aaConn=nil
+local function aaStop() if aaConn then aaConn:Disconnect(); aaConn=nil end; aaAngle=0 end
+local function aaStart()
+  if aaConn then return end
+  aaConn=RunService.Heartbeat:Connect(function(dt)
+    if not CFG.aa_on then aaStop(); return end
+    local char=LP.Character; if not char then return end
+    local head=char:FindFirstChild("Head"); local hrp=char:FindFirstChild("HumanoidRootPart")
+    if not head or not hrp then return end
+    local headOff=hrp.CFrame:ToObjectSpace(head.CFrame)
+    if CFG.aa_mode=="spin" then
+      aaAngle=aaAngle+CFG.aa_spin_speed*dt
+      head.CFrame=hrp.CFrame*CFrame.fromEulerAnglesYXZ(0,aaAngle,0)*headOff
+    elseif CFG.aa_mode=="jitter" then
+      local offset=(mra()*2-1)*math.rad(CFG.aa_jitter_mag)
+      head.CFrame=hrp.CFrame*CFrame.fromEulerAnglesYXZ(0,offset,0)*headOff
+    end
+  end)
+end
+
+local aaWasOn=false
+task.spawn(function()
+  while true do
+    task.wait(0.1)
+    if CFG.aa_on and not aaWasOn then aaStart(); aaWasOn=true
+    elseif not CFG.aa_on and aaWasOn then aaStop(); aaWasOn=false end
+  end
+end)
+LP.CharacterAdded:Connect(function() task.wait(0.5); aaAngle=0; if CFG.aa_on then aaStart() end end)
+
+-- ═══════════════════════════════════════════════════════════
+-- SILENT AIM (Arsenal pfNetwork hook)
+-- ═══════════════════════════════════════════════════════════
+local pfNetwork=nil; local pfBullet=nil; local pfPubSettings=nil
+local pfHooked=false; local origSend=nil; local origNewBullet=nil
+local saRoll=100; local saHead=0
+
+task.spawn(function() while true do task.wait(0.08); saRoll=mra(1,100); saHead=mra(1,100) end end)
+
+local function solveVel(origin,accel,target,speed)
+  local f=-accel; local ld=target-origin; local a=f:Dot(f)
+  if a==0 then return (target-origin).Unit*speed end
+  local k=(4*(f:Dot(ld)+speed*speed))/(2*a)
+  local disc=math.max(0,k*k-(4*(ld:Dot(ld)))/a)
+  local sq=disc^0.5; local t1,t2=k-sq,k+sq
+  local t=(t1>=0) and t1 or t2; t=math.max(t,0.001)^0.5
+  return f*t/2+ld/t
+end
+
+local function installHooks()
+  if pfHooked or not pfNetwork or not pfBullet then return end
+  local bulletAccel=(pfPubSettings and pfPubSettings.bulletAcceleration) or V3(0,-workspace.Gravity*0.45,0)
+  origSend=pfNetwork.send; origNewBullet=pfBullet.new
+  function pfNetwork:send(name,...)
+    if name=="newbullets" and CFG.sa_on and saRoll<=CFG.sa_hitpct then
+      local pn=saHead<=CFG.sa_headpct and "Head" or "Torso"
+      local pos=getTarget(CFG.sa_fov,CFG.sa_predmult,pn)
+      if pos then
+        local a,data,time,b=...
+        if type(data)=="table" and data.bullets and data.firepos then
+          local spd=data.bullets[1] and data.bullets[1][1]
+          if spd then
+            local vel=solveVel(data.firepos,bulletAccel,pos,spd.Magnitude)
+            for i=1,#data.bullets do data.bullets[i][1]=vel end
+          end
+          return origSend(self,name,a,data,time,b)
+        end
+      end
+    end
+    return origSend(self,name,...)
+  end
+  function pfBullet.new(data)
+    if CFG.sa_on and data.onplayerhit and saRoll<=CFG.sa_hitpct then
+      local pn=saHead<=CFG.sa_headpct and "Head" or "Torso"
+      local pos=getTarget(CFG.sa_fov,CFG.sa_predmult,pn)
+      if pos and data.position and data.velocity then
+        data.velocity=solveVel(data.position,bulletAccel,pos,data.velocity.Magnitude)
+      end
+    end
+    return origNewBullet(data)
+  end
+  pfHooked=true;
+end
+
+local function loadPFModules()
+  local sharedEnv=nil; local ok,nils=pcall(getnilinstances)
+  if ok and nils then
+    for i=1,#nils do
+      local inst=nils[i]
+      if inst.Name=="ClientLoader" and inst:IsA("LocalScript") then
+        local env=getsenv(inst)
+        if env and type(env.shared)=="table" and type(env.shared.require)=="function" then sharedEnv=env.shared; break end
+      end
+    end
+  end
+  if not sharedEnv then task.delay(3,loadPFModules); return end
+  local req=sharedEnv.require
+  pcall(function() pfNetwork=req("NetworkClient") end)
+  pcall(function() pfBullet=req("BulletObject") end)
+  pcall(function() pfPubSettings=req("PublicSettings") end)
+  if pfNetwork and pfBullet then installHooks() else task.delay(3,loadPFModules) end
+end
+task.delay(7,loadPFModules)
+
+-- ═══════════════════════════════════════════════════════════
+-- BHOP / INF JUMP
+-- ═══════════════════════════════════════════════════════════
+UIS.JumpRequest:Connect(function()
+    if (CFG.bhop_on or CFG.inf_jump_on) and LP.Character then
+        local hum = LP.Character:FindFirstChildOfClass("Humanoid")
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
+    end
+end)
+
+-- ═══════════════════════════════════════════════════════════
+-- WORLD VISUALS & CROSSHAIR
+-- ═══════════════════════════════════════════════════════════
+local CH_LINES={}
+for i=1,8 do
+  local l=Drawing.new("Line"); l.Thickness=CFG.ch_thick; l.Color=Color3.fromRGB(160,80,255)
+  l.Visible=false; l.ZIndex=999; CH_LINES[i]=l
+end
+local SW_SEGS={
+  {0,0,0,-1,0,-1,1,-1},{0,0,1,0,1,0,1,1},
+  {0,0,0,1,0,1,-1,1},{0,0,-1,0,-1,0,-1,-1},
+}
+local chAngle=0; local chHue=0
+
+RunService.RenderStepped:Connect(function()
+  if CFG.fov_on then Camera.FieldOfView=CFG.fov_val end
+  if CFG.fullbright_on then
+    game.Lighting.Ambient=Color3.new(1,1,1); game.Lighting.OutdoorAmbient=Color3.new(1,1,1); game.Lighting.Brightness=2
+  end
+  if CFG.nofog_on then game.Lighting.FogEnd=1e6 end
+  if LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
+      if CFG.spd_on then LP.Character.Humanoid.WalkSpeed = CFG.spd_val end
+      if CFG.jp_on then LP.Character.Humanoid.JumpPower = CFG.jp_val end
+  end
+end)
+
+-- ═══════════════════════════════════════════════════════════
+-- MAIN RENDER LOOP (ESP + HP BAR)
+-- ═══════════════════════════════════════════════════════════
+local _playerList={}
+RunService.RenderStepped:Connect(function(dt)
+  local vp=Camera.ViewportSize
+  local cx=vp.X*0.5; local cy=vp.Y*0.5
+  local snapOrigin=V2(cx,vp.Y)
+
+  local n=0
+  for _,p in ipairs(Players:GetPlayers()) do n=n+1; _playerList[n]=p end
+  for i=n+1,#_playerList do _playerList[i]=nil end
+
+  for i=1,n do
+    local plr=_playerList[i]
+    if plr==LP then continue end
+    local e=getESPEntry(plr)
+    local char=plr.Character
+    if not char then hideESP(e); continue end
+    local hum=char:FindFirstChildOfClass("Humanoid")
+    if not hum or hum.Health<=0 then hideESP(e); continue end
+    if CFG.esp_team and plr.Team==LP.Team then hideESP(e); continue end
+    local root=char:FindFirstChild("HumanoidRootPart")
+    if CFG.esp_visible and root and not isVisible(root) then hideESP(e); continue end
+
+    if CFG.esp_on then
+      local box=getCharBox(char)
+      if box then
+        local tl,tr,bl,br=box.tl,box.tr,box.bl,box.br
+        e.lines[1].From=tl; e.lines[1].To=tr
+        e.lines[2].From=bl; e.lines[2].To=br
+        e.lines[3].From=tl; e.lines[3].To=bl
+        e.lines[4].From=tr; e.lines[4].To=br
+        local bc=CFG.esp_box_col
+        for j=1,4 do e.lines[j].Color=bc; e.lines[j].Visible=true end
+        e.nameText.Text=plr.DisplayName
+        e.nameText.Position=V2(box.cx-30,tl.Y-16)
+        e.nameText.Color=CFG.esp_name_col; e.nameText.Visible=true
+        
+        -- HP Text
+        if CFG.esp_hp_text_on then
+            e.hpText.Text=tostring(box.hp).." HP"
+            e.hpText.Position=V2(box.cx-14,tl.Y-28)
+            e.hpText.Color=Color3.fromHSV(box.hpPct*0.33,1,1); e.hpText.Visible=true
+        else e.hpText.Visible=false end
+        
+        -- HP Bar
+        if CFG.esp_hp_bar_on then
+            local barHeight = br.Y - tr.Y
+            local barX = tr.X + 4
+            e.hpBarBg.From = V2(barX, tr.Y)
+            e.hpBarBg.To = V2(barX, br.Y)
+            e.hpBarBg.Visible = true
+            
+            local hpOffset = barHeight * (1 - box.hpPct)
+            e.hpBarFill.From = V2(barX, br.Y)
+            e.hpBarFill.To = V2(barX, tr.Y + hpOffset)
+            e.hpBarFill.Color = Color3.fromHSV(box.hpPct * 0.33, 1, 1)
+            e.hpBarFill.Visible = true
+        else e.hpBarBg.Visible = false; e.hpBarFill.Visible = false end
+
+        -- Distance Label (Moved to Bottom)
+        if CFG.esp_dist_on then
+          e.distText.Text=box.dist.." st"
+          e.distText.Position=V2(box.cx-10, br.Y + 2)
+          e.distText.Visible=true
+        else e.distText.Visible=false end
+      else
+        hideESP(e)
+      end
+    else
+      hideESP(e)
+    end
+
+    drawSkeleton(char,e.skelLines)
+
+    if CFG.snap_on and root then
+      local sp2,on2=Camera:WorldToViewportPoint(root.Position)
+      if on2 and sp2.Z>0 then
+        e.snapLine.From=snapOrigin; e.snapLine.To=V2(sp2.X,sp2.Y)
+        e.snapLine.Color=CFG.snap_col; e.snapLine.Visible=true
+      else e.snapLine.Visible=false end
+    else e.snapLine.Visible=false end
+  end
+
+  for plr in pairs(espPool) do
+    if not plr.Parent then cleanESP(plr) end
+  end
+
+  fovCircle.Position=V2(cx,cy)
+  fovCircle.Radius=CFG.ab_fov
+  fovCircle.Visible=CFG.ab_showfov
+
+  tickAimbot(dt)
+  tickTriggerbot()
+
+  chAngle=chAngle+CFG.ch_rot_speed*dt
+  chHue=(chHue+CFG.ch_hue_speed*dt)%1
+  local col=Color3.fromHSV(chHue,1,1)
+  local S=CFG.ch_size
+  local li=1
+  for _,seg in ipairs(SW_SEGS) do
+    local ax,ay=rot2(seg[1]*S,seg[2]*S,chAngle)
+    local bx,by=rot2(seg[3]*S,seg[4]*S,chAngle)
+    CH_LINES[li].From=sv(ax,ay,cx,cy); CH_LINES[li].To=sv(bx,by,cx,cy)
+    CH_LINES[li].Color=col; CH_LINES[li].Visible=CFG.ch_on; li=li+1
+    local lax,lay=rot2(seg[5]*S,seg[6]*S,chAngle)
+    local lbx,lby=rot2(seg[7]*S,seg[8]*S,chAngle)
+    CH_LINES[li].From=sv(lax,lay,cx,cy); CH_LINES[li].To=sv(lbx,lby,cx,cy)
+    CH_LINES[li].Color=col; CH_LINES[li].Visible=CFG.ch_on; li=li+1
+  end
+  
+  updateKeybindsUI()
+end)
+
+-- ═══════════════════════════════════════════════════════════
+-- KEYBINDS
+-- ═══════════════════════════════════════════════════════════
+UIS.InputBegan:Connect(function(inp,gp)
+  if gp then return end
+  local kc=inp.KeyCode
+  if kc==Enum.KeyCode.RightShift then
+    Library:Toggle()
+  elseif kc==Enum.KeyCode.F then
+    CFG.fly_on=not CFG.fly_on
+  elseif kc==Enum.KeyCode.V then
+    CFG.nc_on=not CFG.nc_on
+  elseif kc==Enum.KeyCode.H then
+    CFG.aa_on=not CFG.aa_on
+  elseif kc==Enum.KeyCode.CapsLock then
+    CFG.tb_on=not CFG.tb_on
+  end
+end)
 
