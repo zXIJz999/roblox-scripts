@@ -1,10 +1,11 @@
--- zxijz's skid menu v5.5 | Advanced Rage & ESP Update (LinoriaLib)
+-- zxijz's skid menu v5.8 | The Ultimate Advanced Update (Restored)
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
 local CoreGui = game:GetService("CoreGui")
 local HttpService = game:GetService("HttpService")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TextChatService = game:GetService("TextChatService")
 local Camera = workspace.CurrentCamera
 local LP = Players.LocalPlayer
 local mouse = LP:GetMouse()
@@ -34,7 +35,7 @@ LoaderTitle.BackgroundTransparency = 1
 LoaderTitle.Font = Enum.Font.GothamBold
 LoaderTitle.TextColor3 = Color3.fromRGB(220, 160, 255)
 LoaderTitle.TextSize = 20
-LoaderTitle.Text = "zxijz skid loader v5.5"
+LoaderTitle.Text = "zxijz skid loader v5.8"
 LoaderTitle.Parent = LoaderFrame
 
 local ProgressBar = Instance.new("Frame")
@@ -79,7 +80,7 @@ updateProgress(20, "Loading LinoriaLib...")
 local repo = 'https://raw.githubusercontent.com/violin-suzutsuki/LinoriaLib/main/'
 local function loadRemote(path)
     local ok, body = pcall(function() return game:HttpGet(repo .. path, true) end)
-    if not ok or type(body) ~= 'string' or body:match('^%s*<') then return nil end
+    if not ok or type(body) ~= 'string' then return nil end
     local fn = loadstring(body)
     if not fn then return nil end
     local s, result = pcall(fn)
@@ -95,9 +96,11 @@ updateProgress(60, "Creating GUI...")
 task.wait(0.2)
 
 local Window = Library:CreateWindow({
-    Title = "zxijz skid menu v5.5 | Advanced Edition",
+    Title = "zxijz skid menu v5.8 | The Ultimate Advanced Update",
     Center = true,
     AutoShow = false,
+    TabPadding = 8,
+    MenuFadeTime = 0.2
 })
 
 local Tabs = {
@@ -105,61 +108,74 @@ local Tabs = {
     Rage = Window:AddTab('Rage'),
     ESP = Window:AddTab('ESP'),
     Visuals = Window:AddTab('Visuals'),
+    Players = Window:AddTab('Players'),
     Misc = Window:AddTab('Misc'),
     Advanced = Window:AddTab('Advanced'),
     Config = Window:AddTab('Config'),
 }
 
 -- ═══════════════════════════════════════════════════════════
--- CONFIG (ALL OFF BY DEFAULT)
+-- CONFIG DEFAULTS
 -- ═══════════════════════════════════════════════════════════
 local CFG = {
-    -- ESP
-    esp_on=false, esp_team=true, esp_visible=false,
-    esp_box_col=Color3.fromRGB(180,60,255), esp_name_col=Color3.fromRGB(255,255,255),
-    esp_hp_bar_on=false, esp_hp_text_on=false, esp_thick=1.5,
-    esp_dist_on=false, esp_skel_on=false,
-    esp_skel_col=Color3.fromRGB(200,100,255), esp_skel_thick=1.0,
-    snap_on=false, snap_col=Color3.fromRGB(180,60,255), snap_thick=1.0,
-    
-    -- Aimbot
+    -- Aimbot & SA
     ab_on=false, ab_hard_lock=false, ab_fov=150, ab_smooth=0.12, ab_max_speed=180,
     ab_predict=false, ab_predmult=0.075, ab_team=true, ab_visible=false,
     ab_showfov=false, ab_part="Head", ab_jitter=false, ab_jitter_mag=0.8,
-    ab_snap_thresh=30, ab_hold_key=false, ab_axis_x=true, ab_axis_y=true,
-    ab_priority="crosshair", ab_pinned=nil,
+    ab_priority="crosshair", ab_pinned=nil, ab_hold_key=false,
     
-    -- Triggerbot
-    tb_on=false, tb_delay=0, tb_team=true, tb_visible=true,
-    
-    -- Silent Aim
+    tb_on=false, tb_delay=0, tb_team=true, tb_visible=true, tb_fov=15,
     sa_on=false, sa_fov=9999, sa_team=true, sa_hitpct=100, sa_headpct=90, sa_predmult=0.075,
     
     -- Rage
-    rage_strafe_on=false, rage_strafe_range=15, rage_strafe_speed=5,
-    rage_auto_shoot=false, rage_kill_all=false,
+    rage_strafe_on=false, rage_strafe_range=15, rage_strafe_speed=10,
+    rage_kill_all=false, rage_ka_pos="Behind", rage_ka_dist=4, rage_auto_shoot=false,
+    
+    -- ESP & Chams
+    esp_on=false, esp_team=true, esp_visible=false, esp_thick=1.5,
+    esp_box_col=Color3.fromRGB(180,60,255), esp_name_col=Color3.fromRGB(255,255,255),
+    esp_hp_bar_on=false, esp_hp_text_on=false, esp_hp_col=Color3.fromRGB(80,255,120),
+    esp_dist_on=false, 
+    esp_skel_on=false, esp_skel_col=Color3.fromRGB(200,100,255), esp_skel_thick=1.0,
+    snap_on=false, snap_col=Color3.fromRGB(180,60,255), snap_thick=1.0,
+    
+    chams_on=false, chams_enemy_col=Color3.fromRGB(255,50,50), chams_team_col=Color3.fromRGB(50,255,50),
+    chams_transparency=0.5, chams_outline_col=Color3.fromRGB(255,255,255), chams_solid=false,
+    
+    viewmodel_chams=false, viewmodel_col=Color3.fromRGB(140,40,255), viewmodel_material="ForceField",
     
     -- Visuals
-    show_keybinds=false,
-    hb_on=false, hb_size=4, hb_vis=false,
-    ch_on=false, ch_size=26, ch_thick=2.5, ch_rot_speed=2.2, ch_hue_speed=0.45,
+    show_keybinds=false, menu_rgb=false,
+    hb_on=false, hb_size=4, hb_vis=false, hb_head_only=true,
+    ch_on=false, ch_size=10, ch_thick=2.5, ch_rot_speed=2.2, ch_hue_speed=0.45,
     fov_on=false, fov_val=90, fullbright_on=false, nofog_on=false,
     thirdperson_on=false, thirdperson_dist=12,
+    tracers_on=false, tracers_col=Color3.fromRGB(180,60,255),
+    hit_sound_on=false, hit_sound_id="rbxassetid://1053296915",
+    
+    -- Out of FOV Arrows
+    arrows_on=false, arrows_size=15, arrows_radius=150, arrows_col=Color3.fromRGB(255,0,0), arrows_rgb=false,
     
     -- Movement & Misc
-    fly_on=false, fly_speed=60,
-    nc_on=false, nc_floor_safe=true,
+    fly_on=false, fly_speed=60, nc_on=false, nc_floor_safe=true,
     aa_on=false, aa_mode="spin", aa_spin_speed=8, aa_jitter_mag=25, aa_static_yaw=180,
-    spd_on=false, spd_val=16,
-    jp_on=false, jp_val=50,
+    spd_on=false, spd_val=16, jp_on=false, jp_val=50,
     
     -- Advanced
     inf_ammo_on=false, no_recoil_on=false, rapid_fire_on=false, rapid_fire_rate=5,
-    bhop_on=false, inf_jump_on=false, wallbang_on=false, kill_aura_on=false, kill_aura_range=15,
+    bhop_on=false, inf_jump_on=false, kill_aura_on=false, kill_aura_range=15,
+    wallbang_on=false, smart_wallbang=false,
+    
+    -- Chat Spammer
+    chat_spam_on=false, chat_spam_msg="join dc.gg/dehabify", kill_say_on=false, kill_say_msg="zxijz skid menu owns you!",
+    
+    player_priorities = {},
 }
 
 local cfgFolderPath = "zxijz skid menu/cfg"
 local cfgFilePath = cfgFolderPath .. "/zxijz_cfg.json"
+local autoLoadPath = cfgFolderPath .. "/autoload.txt"
+
 local function initializeFolders()
     if not isfolder then return end
     if not isfolder("zxijz skid menu") then makefolder("zxijz skid menu") end
@@ -177,44 +193,47 @@ if readfile then
 end
 
 -- ═══════════════════════════════════════════════════════════
--- BUILD GUI ELEMENTS
+-- BUILD GUI ELEMENTS (RESTORED ALL TABS & BUTTONS)
 -- ═══════════════════════════════════════════════════════════
 -- AIMBOT TAB
 local AimbotGroup = Tabs.Aimbot:AddLeftGroupbox('Targeting')
 AimbotGroup:AddToggle('Aimbot', {Text = 'Aimbot', Default = CFG.ab_on}):OnChanged(function(v) CFG.ab_on = v end)
-AimbotGroup:AddToggle('HardLock', {Text = 'Hard Lock (No Smoothing)', Default = CFG.ab_hard_lock}):OnChanged(function(v) CFG.ab_hard_lock = v end)
+AimbotGroup:AddToggle('HardLock', {Text = 'Hard Lock (Stick to Head)', Default = CFG.ab_hard_lock}):OnChanged(function(v) CFG.ab_hard_lock = v end)
 AimbotGroup:AddToggle('Hold RMB', {Text = 'Hold RMB to Aim', Default = CFG.ab_hold_key}):OnChanged(function(v) CFG.ab_hold_key = v end)
 AimbotGroup:AddToggle('Team Check', {Text = 'Team Check', Default = CFG.ab_team}):OnChanged(function(v) CFG.ab_team = v end)
 AimbotGroup:AddToggle('Visible Check', {Text = 'Visible Check', Default = CFG.ab_visible}):OnChanged(function(v) CFG.ab_visible = v end)
 AimbotGroup:AddToggle('Prediction', {Text = 'Velocity Prediction', Default = CFG.ab_predict}):OnChanged(function(v) CFG.ab_predict = v end)
 AimbotGroup:AddDropdown('Aim Part', {Values = {'Head','UpperTorso','Torso','HumanoidRootPart'}, Default = 1}):OnChanged(function(v) CFG.ab_part = v end)
+AimbotGroup:AddDropdown('Priority', {Values = {'crosshair','hp','distance'}, Default = 1}):OnChanged(function(v) CFG.ab_priority = v end)
 
 local AimbotSmoothGroup = Tabs.Aimbot:AddRightGroupbox('Smoothing & FOV')
 AimbotSmoothGroup:AddSlider('Smooth', {Text = 'Smooth Factor', Default = math.floor(CFG.ab_smooth*100), Min = 1, Max = 99, Rounding = 0}):OnChanged(function(v) CFG.ab_smooth = v/100 end)
 AimbotSmoothGroup:AddSlider('Max Speed', {Text = 'Max Aim Speed', Default = CFG.ab_max_speed, Min = 10, Max = 360, Rounding = 0}):OnChanged(function(v) CFG.ab_max_speed = v end)
-AimbotSmoothGroup:AddSlider('FOV', {Text = 'FOV Radius', Default = CFG.ab_fov, Min = 10, Max = 500, Rounding = 0}):OnChanged(function(v) CFG.ab_fov = v end)
+AimbotSmoothGroup:AddSlider('FOV', {Text = 'FOV Radius', Default = CFG.ab_fov, Min = 10, Max = 800, Rounding = 0}):OnChanged(function(v) CFG.ab_fov = v end)
 AimbotSmoothGroup:AddToggle('Show FOV', {Text = 'Show FOV Circle', Default = CFG.ab_showfov}):OnChanged(function(v) CFG.ab_showfov = v end)
 
 local TriggerbotGroup = Tabs.Aimbot:AddLeftGroupbox('Triggerbot')
-TriggerbotGroup:AddToggle('Triggerbot', {Text = 'Triggerbot [CapsLock]', Default = CFG.tb_on}):OnChanged(function(v) CFG.tb_on = v end)
+TriggerbotGroup:AddToggle('Triggerbot', {Text = 'Triggerbot', Default = CFG.tb_on}):AddKeyPicker('TriggerKey', {Default = 'CapsLock', SyncToggleState = true, Mode = 'Toggle'})
 TriggerbotGroup:AddToggle('TB Team Check', {Text = 'Team Check', Default = CFG.tb_team}):OnChanged(function(v) CFG.tb_team = v end)
 TriggerbotGroup:AddSlider('TB Delay', {Text = 'Trigger Delay (ms)', Default = CFG.tb_delay, Min = 0, Max = 300, Rounding = 0}):OnChanged(function(v) CFG.tb_delay = v end)
 
-local SilentAimGroup = Tabs.Aimbot:AddRightGroupbox('Silent Aim (Arsenal)')
+local SilentAimGroup = Tabs.Aimbot:AddRightGroupbox('Silent Aim (Global Hook)')
 SilentAimGroup:AddToggle('Silent Aim', {Text = 'Silent Aim', Default = CFG.sa_on}):OnChanged(function(v) CFG.sa_on = v end)
 SilentAimGroup:AddToggle('SA Team Check', {Text = 'Team Check', Default = CFG.sa_team}):OnChanged(function(v) CFG.sa_team = v end)
 SilentAimGroup:AddSlider('SA Hit %', {Text = 'SA Hit %', Default = CFG.sa_hitpct, Min = 1, Max = 100, Rounding = 0}):OnChanged(function(v) CFG.sa_hitpct = v end)
 SilentAimGroup:AddSlider('SA Head %', {Text = 'SA Head %', Default = CFG.sa_headpct, Min = 0, Max = 100, Rounding = 0}):OnChanged(function(v) CFG.sa_headpct = v end)
 
 -- RAGE TAB
-local RageGroup = Tabs.Rage:AddLeftGroupbox('Rage Features')
-RageGroup:AddToggle('RageStrafe', {Text = 'Combat Strafe (Teleport Around)', Default = CFG.rage_strafe_on}):OnChanged(function(v) CFG.rage_strafe_on = v end)
+local RageGroup = Tabs.Rage:AddLeftGroupbox('Combat Strafe')
+RageGroup:AddToggle('RageStrafe', {Text = 'Strafe Around Target', Default = CFG.rage_strafe_on}):AddKeyPicker('StrafeKey', {Default = 'C', SyncToggleState = false, Mode = 'Hold'})
 RageGroup:AddSlider('StrafeRange', {Text = 'Strafe Radius (Studs)', Default = CFG.rage_strafe_range, Min = 5, Max = 30, Rounding = 0}):OnChanged(function(v) CFG.rage_strafe_range = v end)
-RageGroup:AddSlider('StrafeSpeed', {Text = 'Strafe Speed', Default = CFG.rage_strafe_speed, Min = 1, Max = 20, Rounding = 0}):OnChanged(function(v) CFG.rage_strafe_speed = v end)
+RageGroup:AddSlider('StrafeSpeed', {Text = 'Strafe Speed', Default = CFG.rage_strafe_speed, Min = 1, Max = 30, Rounding = 0}):OnChanged(function(v) CFG.rage_strafe_speed = v end)
 RageGroup:AddToggle('AutoShoot', {Text = 'Auto-Shoot Visible Targets', Default = CFG.rage_auto_shoot}):OnChanged(function(v) CFG.rage_auto_shoot = v end)
 
-local WipeGroup = Tabs.Rage:AddRightGroupbox('Server Wipe')
-WipeGroup:AddToggle('KillAll', {Text = 'Teleport Behind All (Kill All)', Default = CFG.rage_kill_all}):OnChanged(function(v) CFG.rage_kill_all = v end)
+local WipeGroup = Tabs.Rage:AddRightGroupbox('Teleport Kill All')
+WipeGroup:AddToggle('KillAll', {Text = 'Teleport to Targets (Kill All)', Default = CFG.rage_kill_all}):AddKeyPicker('KA_Key', {Default = 'X', SyncToggleState = false, Mode = 'Toggle'})
+WipeGroup:AddDropdown('KA_Pos', {Values = {'Behind','Above','Below','Front'}, Default = 1}):OnChanged(function(v) CFG.rage_ka_pos = v end)
+WipeGroup:AddSlider('KA_Dist', {Text = 'Distance from Target', Default = CFG.rage_ka_dist, Min = 1, Max = 20, Rounding = 0}):OnChanged(function(v) CFG.rage_ka_dist = v end)
 
 -- ESP TAB
 local ESPBoxGroup = Tabs.ESP:AddLeftGroupbox('ESP Settings')
@@ -224,56 +243,132 @@ ESPBoxGroup:AddToggle('HPText', {Text = 'Show Health Text', Default = CFG.esp_hp
 ESPBoxGroup:AddToggle('Distance Label', {Text = 'Show Distance (Bottom)', Default = CFG.esp_dist_on}):OnChanged(function(v) CFG.esp_dist_on = v end)
 ESPBoxGroup:AddToggle('Team Check', {Text = 'Team Check', Default = CFG.esp_team}):OnChanged(function(v) CFG.esp_team = v end)
 
+local ArrowGroup = Tabs.ESP:AddLeftGroupbox('Out of FOV Arrows')
+ArrowGroup:AddToggle('ArrowsOn', {Text = 'Show Arrows', Default = CFG.arrows_on}):AddColorPicker('ArrowsCol', {Default = CFG.arrows_col, Title = 'Arrow Color'}):OnChanged(function() CFG.arrows_col = Options.ArrowsCol.Value end)
+Toggles.ArrowsOn:OnChanged(function(v) CFG.arrows_on = v end)
+ArrowGroup:AddToggle('ArrowsRGB', {Text = 'Rainbow Arrows', Default = CFG.arrows_rgb}):OnChanged(function(v) CFG.arrows_rgb = v end)
+ArrowGroup:AddSlider('ArrowsSize', {Text = 'Arrow Size', Default = CFG.arrows_size, Min = 5, Max = 40, Rounding = 0}):OnChanged(function(v) CFG.arrows_size = v end)
+ArrowGroup:AddSlider('ArrowsRadius', {Text = 'Arrow Radius', Default = CFG.arrows_radius, Min = 50, Max = 500, Rounding = 0}):OnChanged(function(v) CFG.arrows_radius = v end)
+
+local ChamsGroup = Tabs.ESP:AddRightGroupbox('Chams System')
+ChamsGroup:AddToggle('ChamsOn', {Text = 'Enable Player Chams', Default = CFG.chams_on}):OnChanged(function(v) CFG.chams_on = v end)
+ChamsGroup:AddToggle('ChamsSolid', {Text = 'Solid Chams (No Outline)', Default = CFG.chams_solid}):OnChanged(function(v) CFG.chams_solid = v end)
+ChamsGroup:AddLabel('Enemy Color'):AddColorPicker('ChmEnem', {Default = CFG.chams_enemy_col, Title = 'Enemy Chams'}):OnChanged(function() CFG.chams_enemy_col = Options.ChmEnem.Value end)
+ChamsGroup:AddLabel('Team Color'):AddColorPicker('ChmTeam', {Default = CFG.chams_team_col, Title = 'Team Chams'}):OnChanged(function() CFG.chams_team_col = Options.ChmTeam.Value end)
+ChamsGroup:AddSlider('ChamsTrans', {Text = 'Chams Transparency', Default = CFG.chams_transparency * 10, Min = 0, Max = 10, Rounding = 0}):OnChanged(function(v) CFG.chams_transparency = v/10 end)
+
 local ESPSkelGroup = Tabs.ESP:AddRightGroupbox('Extras')
 ESPSkelGroup:AddToggle('Skeleton', {Text = 'Skeleton ESP', Default = CFG.esp_skel_on}):OnChanged(function(v) CFG.esp_skel_on = v end)
 ESPSkelGroup:AddToggle('Snap Lines', {Text = 'Snap Lines', Default = CFG.snap_on}):OnChanged(function(v) CFG.snap_on = v end)
 
 -- VISUALS TAB
-local VisualsWorldGroup = Tabs.Visuals:AddLeftGroupbox('World & Crosshair')
-VisualsWorldGroup:AddToggle('Crosshair', {Text = 'Custom Crosshair', Default = CFG.ch_on}):OnChanged(function(v) CFG.ch_on = v end)
-VisualsWorldGroup:AddToggle('KeybindUI', {Text = 'Show Keybinds UI', Default = CFG.show_keybinds}):OnChanged(function(v) 
+local VisualsWorldGroup = Tabs.Visuals:AddLeftGroupbox('World & Viewmodel')
+VisualsWorldGroup:AddToggle('FOV Override', {Text = 'FOV Override', Default = CFG.fov_on}):OnChanged(function(v) CFG.fov_on = v end)
+VisualsWorldGroup:AddSlider('FOV Val', {Text = 'FOV Value', Default = CFG.fov_val, Min = 50, Max = 150, Rounding = 0}):OnChanged(function(v) CFG.fov_val = v end)
+VisualsWorldGroup:AddToggle('Fullbright', {Text = 'Fullbright', Default = CFG.fullbright_on}):OnChanged(function(v) CFG.fullbright_on = v end)
+VisualsWorldGroup:AddToggle('No Fog', {Text = 'No Fog', Default = CFG.nofog_on}):OnChanged(function(v) CFG.nofog_on = v end)
+
+VisualsWorldGroup:AddToggle('VMChams', {Text = 'Viewmodel Chams', Default = CFG.viewmodel_chams}):AddColorPicker('VMCol', {Default = CFG.viewmodel_col, Title = 'Gun Chams'}):OnChanged(function() CFG.viewmodel_col = Options.VMCol.Value end)
+Toggles.VMChams:OnChanged(function(v) CFG.viewmodel_chams = v end)
+VisualsWorldGroup:AddDropdown('VMMat', {Values = {'ForceField','Neon','Plastic','Glass'}, Default = 1, Text = 'Viewmodel Material'}):OnChanged(function(v) CFG.viewmodel_material = v end)
+
+local VisualsEffectsGroup = Tabs.Visuals:AddRightGroupbox('Effects & Crosshair')
+VisualsEffectsGroup:AddToggle('Crosshair', {Text = 'Custom Crosshair', Default = CFG.ch_on}):OnChanged(function(v) CFG.ch_on = v end)
+VisualsEffectsGroup:AddSlider('Crosshair Size', {Text = 'Crosshair Size', Default = CFG.ch_size, Min = 5, Max = 60, Rounding = 0}):OnChanged(function(v) CFG.ch_size = v end)
+VisualsEffectsGroup:AddToggle('Tracers', {Text = 'Bullet Tracers', Default = CFG.tracers_on}):AddColorPicker('TrcCol', {Default = CFG.tracers_col, Title = 'Tracer Color'}):OnChanged(function() CFG.tracers_col = Options.TrcCol.Value end)
+Toggles.Tracers:OnChanged(function(v) CFG.tracers_on = v end)
+VisualsEffectsGroup:AddToggle('HitSound', {Text = 'Custom Hit Sound', Default = CFG.hit_sound_on}):OnChanged(function(v) CFG.hit_sound_on = v end)
+VisualsEffectsGroup:AddToggle('KeybindUI', {Text = 'Show Keybinds UI', Default = CFG.show_keybinds}):OnChanged(function(v) 
     CFG.show_keybinds = v
-    if CoreGui:FindFirstChild("zxijz_keybinds") then
-        CoreGui.zxijz_keybinds.Enabled = v
+    if CoreGui:FindFirstChild("zxijz_keybinds") then CoreGui.zxijz_keybinds.Enabled = v end
+end)
+
+-- PLAYERS TAB
+local PlayersTabGroup = Tabs.Players:AddLeftGroupbox('Live Players')
+local SelectedPlayer = nil
+local PlayerDropdown = PlayersTabGroup:AddDropdown('PlayerSelect', {Values = {}, Default = 1, Text = 'Select Player'})
+
+local function refreshPlayerDropdown()
+    local names = {}
+    for _, p in ipairs(Players:GetPlayers()) do if p ~= LP then table.insert(names, p.Name) end end
+    PlayerDropdown:SetValues(names)
+end
+Players.PlayerAdded:Connect(refreshPlayerDropdown)
+Players.PlayerRemoving:Connect(refreshPlayerDropdown)
+refreshPlayerDropdown()
+
+PlayerDropdown:OnChanged(function(val) SelectedPlayer = Players:FindFirstChild(val) end)
+
+local PlayerActionsGroup = Tabs.Players:AddRightGroupbox('Player Actions')
+PlayerActionsGroup:AddButton('Target (Pin Aimbot)', function()
+    if SelectedPlayer then CFG.ab_pinned = SelectedPlayer; CFG.ab_priority = "manual"; Library:Notify("Pinned " .. SelectedPlayer.Name .. " for Aimbot") end
+end)
+PlayerActionsGroup:AddButton('Teleport To Player', function()
+    if SelectedPlayer and SelectedPlayer.Character and SelectedPlayer.Character:FindFirstChild("HumanoidRootPart") and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+        LP.Character.HumanoidRootPart.CFrame = SelectedPlayer.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 4)
     end
 end)
-VisualsWorldGroup:AddToggle('FOV Override', {Text = 'FOV Override', Default = CFG.fov_on}):OnChanged(function(v) CFG.fov_on = v end)
-VisualsWorldGroup:AddSlider('FOV Val', {Text = 'FOV Value', Default = CFG.fov_val, Min = 50, Max = 120, Rounding = 0}):OnChanged(function(v) CFG.fov_val = v end)
-VisualsWorldGroup:AddToggle('Fullbright', {Text = 'Fullbright', Default = CFG.fullbright_on}):OnChanged(function(v) CFG.fullbright_on = v end)
+PlayerActionsGroup:AddDropdown('PlayerPriority', {Values = {'Normal', 'High', 'Ignore'}, Default = 1, Text = 'Aim Priority'}):OnChanged(function(val)
+    if SelectedPlayer then CFG.player_priorities[SelectedPlayer.Name] = val; Library:Notify(SelectedPlayer.Name .. " priority set to " .. val) end
+end)
+PlayerActionsGroup:AddButton('Refresh List', function() refreshPlayerDropdown() end)
 
 -- MISC TAB
 local MiscMovementGroup = Tabs.Misc:AddLeftGroupbox('Movement')
-MiscMovementGroup:AddToggle('Fly', {Text = 'Fly [F]', Default = CFG.fly_on}):OnChanged(function(v) CFG.fly_on = v end)
+MiscMovementGroup:AddToggle('Fly', {Text = 'Fly', Default = CFG.fly_on}):AddKeyPicker('FlyKey', {Default = 'F', SyncToggleState = true, Mode = 'Toggle'})
 MiscMovementGroup:AddSlider('Fly Speed', {Text = 'Fly Speed', Default = CFG.fly_speed, Min = 10, Max = 200, Rounding = 0}):OnChanged(function(v) CFG.fly_speed = v end)
-MiscMovementGroup:AddToggle('Noclip', {Text = 'Noclip [V]', Default = CFG.nc_on}):OnChanged(function(v) CFG.nc_on = v end)
+MiscMovementGroup:AddToggle('Noclip', {Text = 'Noclip', Default = CFG.nc_on}):AddKeyPicker('NcKey', {Default = 'V', SyncToggleState = true, Mode = 'Toggle'})
 MiscMovementGroup:AddToggle('Speed Hack', {Text = 'Speed Hack', Default = CFG.spd_on}):OnChanged(function(v) CFG.spd_on = v end)
 MiscMovementGroup:AddSlider('Walk Speed', {Text = 'Walk Speed', Default = CFG.spd_val, Min = 16, Max = 100, Rounding = 0}):OnChanged(function(v) CFG.spd_val = v end)
 MiscMovementGroup:AddToggle('Jump Power', {Text = 'Jump Power Override', Default = CFG.jp_on}):OnChanged(function(v) CFG.jp_on = v end)
 MiscMovementGroup:AddSlider('Jump Power Val', {Text = 'Jump Power', Default = CFG.jp_val, Min = 50, Max = 300, Rounding = 0}):OnChanged(function(v) CFG.jp_val = v end)
 
-local MiscAAGroup = Tabs.Misc:AddRightGroupbox('Anti-Aim & Camera')
-MiscAAGroup:AddToggle('Anti-Aim', {Text = 'Anti-Aim [H]', Default = CFG.aa_on}):OnChanged(function(v) CFG.aa_on = v end)
+local MiscAAGroup = Tabs.Misc:AddRightGroupbox('Anti-Aim')
+MiscAAGroup:AddToggle('Anti-Aim', {Text = 'Anti-Aim', Default = CFG.aa_on}):AddKeyPicker('AAKey', {Default = 'H', SyncToggleState = true, Mode = 'Toggle'})
 MiscAAGroup:AddDropdown('AA Mode', {Values = {'spin','jitter','static'}, Default = 1}):OnChanged(function(v) CFG.aa_mode = v end)
 MiscAAGroup:AddSlider('Spin Speed', {Text = 'Spin Speed', Default = CFG.aa_spin_speed, Min = 1, Max = 30, Rounding = 0}):OnChanged(function(v) CFG.aa_spin_speed = v end)
+MiscAAGroup:AddToggle('Third Person', {Text = 'Third Person [P]', Default = CFG.thirdperson_on}):OnChanged(function(v) 
+    CFG.thirdperson_on = v
+    if v then LP.CameraMaxZoomDistance=CFG.thirdperson_dist; LP.CameraMinZoomDistance=CFG.thirdperson_dist
+    else LP.CameraMaxZoomDistance=400; LP.CameraMinZoomDistance=0.5 end
+end)
+MiscAAGroup:AddSlider('3P Dist', {Text = '3P Distance', Default = CFG.thirdperson_dist, Min = 4, Max = 40, Rounding = 0}):OnChanged(function(v) CFG.thirdperson_dist = v end)
 
 -- ADVANCED TAB
-local AdvWeaponsGroup = Tabs.Advanced:AddLeftGroupbox('Weapon Mods (Arsenal)')
+local AdvWeaponsGroup = Tabs.Advanced:AddLeftGroupbox('Weapon Mods & Wallbang')
 AdvWeaponsGroup:AddToggle('Inf Ammo', {Text = 'Infinite Ammo', Default = CFG.inf_ammo_on}):OnChanged(function(v) CFG.inf_ammo_on = v end)
 AdvWeaponsGroup:AddToggle('No Recoil', {Text = 'No Recoil / Spread', Default = CFG.no_recoil_on}):OnChanged(function(v) CFG.no_recoil_on = v end)
 AdvWeaponsGroup:AddToggle('Rapid Fire', {Text = 'Rapid Fire', Default = CFG.rapid_fire_on}):OnChanged(function(v) CFG.rapid_fire_on = v end)
-AdvWeaponsGroup:AddToggle('Wallbang', {Text = 'Auto-Wallbang', Default = CFG.wallbang_on}):OnChanged(function(v) CFG.wallbang_on = v end)
+AdvWeaponsGroup:AddToggle('Wallbang', {Text = 'Arsenal Auto-Wallbang', Default = CFG.wallbang_on}):OnChanged(function(v) CFG.wallbang_on = v end)
+AdvWeaponsGroup:AddToggle('SmartWallbang', {Text = 'Smart Map Wallbang (Deletes Walls)', Default = CFG.smart_wallbang}):OnChanged(function(v) CFG.smart_wallbang = v end)
 
-local AdvExploitsGroup = Tabs.Advanced:AddRightGroupbox('Exploits')
+local HitboxGroup = Tabs.Advanced:AddLeftGroupbox('Hitbox Expander')
+HitboxGroup:AddToggle('Hitbox Expander', {Text = 'Hitbox Expander', Default = CFG.hb_on}):OnChanged(function(v) CFG.hb_on = v end)
+HitboxGroup:AddToggle('HitboxHeadOnly', {Text = 'Head Hitbox Only', Default = CFG.hb_head_only}):OnChanged(function(v) CFG.hb_head_only = v end)
+HitboxGroup:AddSlider('Hitbox Size', {Text = 'Hitbox Size', Default = CFG.hb_size, Min = 1, Max = 20, Rounding = 0}):OnChanged(function(v) CFG.hb_size = v end)
+
+local AdvExploitsGroup = Tabs.Advanced:AddRightGroupbox('Exploits & Chat')
+AdvExploitsGroup:AddToggle('Kill Aura', {Text = 'Melee Kill Aura', Default = CFG.kill_aura_on}):OnChanged(function(v) CFG.kill_aura_on = v end)
 AdvExploitsGroup:AddToggle('Bhop', {Text = 'Bhop (Hold Space)', Default = CFG.bhop_on}):OnChanged(function(v) CFG.bhop_on = v end)
 AdvExploitsGroup:AddToggle('Inf Jump', {Text = 'Infinite Jump', Default = CFG.inf_jump_on}):OnChanged(function(v) CFG.inf_jump_on = v end)
+AdvExploitsGroup:AddToggle('ChatSpam', {Text = 'Chat Spammer', Default = CFG.chat_spam_on}):OnChanged(function(v) CFG.chat_spam_on = v end)
+AdvExploitsGroup:AddInput('SpamMsg', {Default = CFG.chat_spam_msg, Numeric = false, Finished = false, Text = 'Spam Message', Tooltip = 'Message to spam'}):OnChanged(function(v) CFG.chat_spam_msg = v end)
+AdvExploitsGroup:AddToggle('KillSay', {Text = 'Kill Say', Default = CFG.kill_say_on}):OnChanged(function(v) CFG.kill_say_on = v end)
+AdvExploitsGroup:AddInput('KillSayMsg', {Default = CFG.kill_say_msg, Numeric = false, Finished = false, Text = 'Kill Say Message'}):OnChanged(function(v) CFG.kill_say_msg = v end)
 
 -- CONFIG TAB
-local ConfigSaveGroup = Tabs.Config:AddLeftGroupbox('Save / Load')
+local ConfigSaveGroup = Tabs.Config:AddLeftGroupbox('Menu & Save')
+ConfigSaveGroup:AddLabel('Menu Toggle Key'):AddKeyPicker('MenuKeybind', {Default = 'RightShift', NoUI = true, Text = 'Menu Keybind'})
+Library.ToggleKeybind = Options.MenuKeybind
+
+ConfigSaveGroup:AddToggle('MenuRGB', {Text = 'Rainbow Menu Theme', Default = CFG.menu_rgb}):OnChanged(function(v) CFG.menu_rgb = v end)
+
 ConfigSaveGroup:AddButton('Save Config', function()
     if not writefile then return end
     initializeFolders()
     local t={} for k,v in pairs(CFG) do if type(v)~="userdata" and type(v)~="function" then t[k]=v end end
     pcall(function() writefile(cfgFilePath, HttpService:JSONEncode(t)) end)
+    Library:Notify("Config Saved!")
 end)
 ConfigSaveGroup:AddButton('Load Config', function()
     if not readfile then return end
@@ -282,18 +377,36 @@ ConfigSaveGroup:AddButton('Load Config', function()
         local t = HttpService:JSONDecode(raw) 
         for k,v in pairs(t) do if CFG[k]~=nil and type(CFG[k])==type(v) then CFG[k]=v end end 
     end)
+    Library:Notify("Config Loaded!")
 end)
 
-updateProgress(100, "Done!")
-task.wait(0.2)
-LoaderGui:Destroy()
-Library:Toggle()
+local AutoLoadToggle = ConfigSaveGroup:AddToggle('AutoLoad', {Text = 'Auto-Load Config on Boot', Default = false})
+AutoLoadToggle:OnChanged(function(v)
+    if writefile then initializeFolders(); pcall(function() writefile(autoLoadPath, tostring(v)) end) end
+end)
+
+-- Execute Auto-Load check
+if readfile then
+    pcall(function()
+        local al = readfile(autoLoadPath)
+        if al == "true" then
+            local raw = readfile(cfgFilePath)
+            local t = HttpService:JSONDecode(raw)
+            for k,v in pairs(t) do if CFG[k]~=nil and type(CFG[k])==type(v) then CFG[k]=v end end
+            AutoLoadToggle:SetValue(true)
+            Library:Notify("Auto-Loaded Config!")
+        end
+    end)
+end
 
 ThemeManager:SetLibrary(Library)
 SaveManager:SetLibrary(Library)
 SaveManager:SetFolder('zxijz skid menu/cfg/ui-specific')
 SaveManager:BuildConfigSection(Tabs.Config)
 ThemeManager:ApplyToTab(Tabs.Config)
+
+LoaderGui:Destroy()
+Window:Show()
 
 -- ═══════════════════════════════════════════════════════════
 -- KEYBINDS UI OVERLAY
@@ -333,36 +446,34 @@ KeybindsList.Parent = KeybindsFrame
 local KeybindsLayout = Instance.new("UIListLayout", KeybindsList)
 KeybindsLayout.Padding = UDim.new(0, 5)
 
-local keybindLabels = {}
-local function addKeybindLabel(text, toggle)
-    local label = Instance.new("TextLabel")
-    label.Size = UDim2.new(1, 0, 0, 20)
-    label.BackgroundTransparency = 1
-    label.Font = Enum.Font.Gotham
-    label.TextSize = 12
-    label.Text = text
-    label.Parent = KeybindsList
-    if toggle ~= nil then keybindLabels[toggle] = label end
-end
-
-addKeybindLabel("RShift: Menu", nil)
-addKeybindLabel("F: Fly", "fly_on")
-addKeybindLabel("V: Noclip", "nc_on")
-addKeybindLabel("H: Anti-Aim", "aa_on")
-addKeybindLabel("CapsLock: Triggerbot", "tb_on")
-
 local function updateKeybindsUI()
-    for toggle, label in pairs(keybindLabels) do
-        if toggle then
-            local isOn = CFG[toggle]
-            label.TextColor3 = isOn and Color3.fromRGB(80, 255, 120) or Color3.fromRGB(255, 80, 80)
-            label.Text = label.Text:gsub(" %[ON%]", ""):gsub(" %[OFF%]", "") .. (isOn and " [ON]" or " [OFF]")
-        end
+    if not CFG.show_keybinds then return end
+    if CFG.menu_rgb then kStroke.Color = Color3.fromHSV(tick() % 5 / 5, 1, 1) end
+    for _, child in ipairs(KeybindsList:GetChildren()) do if child:IsA("TextLabel") then child:Destroy() end end
+    
+    local binds = {
+        {"Fly", Options.FlyKey, CFG.fly_on},
+        {"Noclip", Options.NcKey, CFG.nc_on},
+        {"Anti-Aim", Options.AAKey, CFG.aa_on},
+        {"Triggerbot", Options.TriggerKey, CFG.tb_on},
+        {"Kill All", Options.KA_Key, CFG.rage_kill_all},
+        {"Strafe", Options.StrafeKey, Options.StrafeKey:GetState()}
+    }
+    
+    for _, b in ipairs(binds) do
+        local label = Instance.new("TextLabel")
+        label.Size = UDim2.new(1, 0, 0, 20)
+        label.BackgroundTransparency = 1
+        label.Font = Enum.Font.Gotham
+        label.TextSize = 12
+        label.TextColor3 = b[3] and Color3.fromRGB(80, 255, 120) or Color3.fromRGB(255, 80, 80)
+        label.Text = string.format("[%s] %s: %s", b[2].Value, b[1], b[3] and "ON" or "OFF")
+        label.Parent = KeybindsList
     end
 end
 
 -- ═══════════════════════════════════════════════════════════
--- MATH / UTIL ALIASES
+-- MATH / UTIL
 -- ═══════════════════════════════════════════════════════════
 local V3, V2, CF = Vector3.new, Vector2.new, CFrame.new
 local mfl, mcl = math.floor, math.clamp
@@ -371,27 +482,50 @@ local huge = math.huge
 
 local function isVisible(part)
   local origin = Camera.CFrame.Position
-  local dir    = (part.Position - origin)
-  local ray    = Ray.new(origin, dir)
-  local hit    = workspace:FindPartOnRayWithIgnoreList(ray,{LP.Character,Camera},false,true)
+  local ray = Ray.new(origin, (part.Position - origin))
+  local hit = workspace:FindPartOnRayWithIgnoreList(ray,{LP.Character,Camera},false,true)
   return not hit or Players:GetPlayerFromCharacter(hit.Parent)~=nil or Players:GetPlayerFromCharacter(hit.Parent.Parent)~=nil
 end
 
-local function rot2(x,y,a)
-  local c,s=mco(a),msi(a); return x*c-y*s, x*s+y*c
-end
+local function rot2(x,y,a) local c,s=mco(a),msi(a); return x*c-y*s, x*s+y*c end
 local function sv(x,y,cx,cy) return V2(cx+x,cy+y) end
 
 local function newLine(thick,col)
-  local l=Drawing.new("Line")
-  l.Thickness=thick or 1; l.Color=col or Color3.new(1,1,1)
+  local l=Drawing.new("Line"); l.Thickness=thick or 1; l.Color=col or Color3.new(1,1,1)
   l.Visible=false; l.ZIndex=5; return l
 end
 
 local function newText(size,col)
-  local t=Drawing.new("Text")
-  t.Size=size or 13; t.Color=col or Color3.new(1,1,1)
+  local t=Drawing.new("Text"); t.Size=size or 13; t.Color=col or Color3.new(1,1,1)
   t.Visible=false; t.Outline=true; t.ZIndex=6; return t
+end
+
+local function chatMsg(msg)
+    if TextChatService.ChatVersion == Enum.ChatVersion.TextChatService then
+        TextChatService.TextChannels.RBXGeneral:SendAsync(msg)
+    else
+        ReplicatedStorage.DefaultChatSystemChatEvents.SayMessageRequest:FireServer(msg, "All")
+    end
+end
+
+-- ═══════════════════════════════════════════════════════════
+-- CHAT SPAMMER & HIT SOUNDS
+-- ═══════════════════════════════════════════════════════════
+task.spawn(function()
+    while task.wait(3) do
+        if CFG.chat_spam_on then pcall(function() chatMsg(CFG.chat_spam_msg) end) end
+    end
+end)
+
+local hitSound = Instance.new("Sound", CoreGui)
+hitSound.Volume = 2
+
+local function playHitSound()
+    if CFG.hit_sound_on then
+        hitSound.SoundId = CFG.hit_sound_id
+        hitSound:Play()
+        if CFG.kill_say_on then pcall(function() chatMsg(CFG.kill_say_msg) end) end
+    end
 end
 
 -- ═══════════════════════════════════════════════════════════
@@ -486,7 +620,7 @@ local function drawSkeleton(char,skelLines)
 end
 
 -- ═══════════════════════════════════════════════════════════
--- HITBOX EXPANDER
+-- HITBOX EXPANDER (SMART SELECTIVE)
 -- ═══════════════════════════════════════════════════════════
 local hbFolder=Instance.new("Folder")
 hbFolder.Name="zxijz_hbvis"; hbFolder.Parent=workspace
@@ -498,8 +632,9 @@ local function updateHitboxes()
     task.spawn(function()
       local char=plr.Character
       if not char then return end
-      local root=char:FindFirstChild("HumanoidRootPart")
-      if not root then return end
+      local targetPart = CFG.hb_head_only and char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart")
+      if not targetPart then return end
+      
       if CFG.hb_on then
         if not hbParts[plr] or not hbParts[plr].Parent then
           local p=Instance.new("Part")
@@ -507,10 +642,13 @@ local function updateHitboxes()
           p.Size=V3(CFG.hb_size,CFG.hb_size,CFG.hb_size)
           p.Transparency=1; p.CanCollide=false; p.Anchored=false; p.CastShadow=false; p.Parent=char
           local weld=Instance.new("WeldConstraint")
-          weld.Part0=root; weld.Part1=p; weld.Parent=p
+          weld.Part0=targetPart; weld.Part1=p; weld.Parent=p
           hbParts[plr]=p
         else
           hbParts[plr].Size=V3(CFG.hb_size,CFG.hb_size,CFG.hb_size)
+          if hbParts[plr]:FindFirstChildOfClass("WeldConstraint") then
+              hbParts[plr]:FindFirstChildOfClass("WeldConstraint").Part0 = targetPart
+          end
         end
         local e=espPool[plr]
         if CFG.hb_vis and e then
@@ -548,55 +686,170 @@ RunService.Heartbeat:Connect(function()
 end)
 
 -- ═══════════════════════════════════════════════════════════
+-- CHAMS & VIEWMODEL
+-- ═══════════════════════════════════════════════════════════
+local function updateChams()
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr == LP then continue end
+        local char = plr.Character
+        if char then
+            local highlight = char:FindFirstChild("zxijz_chams")
+            if CFG.chams_on then
+                if not highlight then
+                    highlight = Instance.new("Highlight")
+                    highlight.Name = "zxijz_chams"
+                    highlight.Parent = char
+                end
+                highlight.FillTransparency = CFG.chams_solid and 0 or CFG.chams_transparency
+                highlight.OutlineTransparency = CFG.chams_solid and 1 or 0
+                highlight.OutlineColor = CFG.chams_outline_col
+                highlight.FillColor = (plr.Team == LP.Team) and CFG.chams_team_col or CFG.chams_enemy_col
+                highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop
+            else
+                if highlight then highlight:Destroy() end
+            end
+        end
+    end
+    
+    local arms = Camera:FindFirstChild("Arms")
+    if arms then
+        local vHl = arms:FindFirstChild("zxijz_vm")
+        if CFG.viewmodel_chams then
+            if not vHl then vHl = Instance.new("Highlight", arms); vHl.Name = "zxijz_vm" end
+            vHl.FillColor = CFG.viewmodel_col
+            vHl.FillTransparency = 0
+            vHl.OutlineTransparency = 1
+            for _, p in ipairs(arms:GetDescendants()) do
+                if p:IsA("BasePart") or p:IsA("MeshPart") then p.Material = Enum.Material[CFG.viewmodel_material] end
+            end
+        else
+            if vHl then vHl:Destroy() end
+        end
+    end
+end
+
+-- ═══════════════════════════════════════════════════════════
+-- OUT OF FOV ARROWS
+-- ═══════════════════════════════════════════════════════════
+local arrows = {}
+
+local function updateArrows()
+    local center = V2(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+    local col = CFG.arrows_rgb and Color3.fromHSV(tick() % 5 / 5, 1, 1) or CFG.arrows_col
+    
+    for _, plr in ipairs(Players:GetPlayers()) do
+        if plr == LP or (CFG.ab_team and plr.Team == LP.Team) then 
+            if arrows[plr] then arrows[plr].Visible = false end
+            continue 
+        end
+        
+        local char = plr.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
+        local hum = char and char:FindFirstChild("Humanoid")
+        
+        if not root or not hum or hum.Health <= 0 then
+            if arrows[plr] then arrows[plr].Visible = false end
+            continue
+        end
+        
+        local sp, on = Camera:WorldToViewportPoint(root.Position)
+        if not on and CFG.arrows_on then
+            if not arrows[plr] then
+                arrows[plr] = Drawing.new("Triangle")
+                arrows[plr].Filled = true
+                arrows[plr].Thickness = 1
+            end
+            
+            local arr = arrows[plr]
+            arr.Color = col
+            
+            local proj = Camera.CFrame:PointToObjectSpace(root.Position)
+            local ang = math.atan2(proj.Z, proj.X)
+            local dir = V2(math.cos(ang), math.sin(ang))
+            
+            local pos = center + (dir * CFG.arrows_radius)
+            local p1 = pos + (dir * CFG.arrows_size)
+            local p2 = pos - (dir * CFG.arrows_size) + V2(-dir.Y, dir.X) * (CFG.arrows_size/2)
+            local p3 = pos - (dir * CFG.arrows_size) - V2(-dir.Y, dir.X) * (CFG.arrows_size/2)
+            
+            arr.PointA = p1; arr.PointB = p2; arr.PointC = p3
+            arr.Visible = true
+        else
+            if arrows[plr] then arrows[plr].Visible = false end
+        end
+    end
+end
+Players.PlayerRemoving:Connect(function(plr)
+    if arrows[plr] then arrows[plr]:Remove(); arrows[plr] = nil end
+end)
+
+-- ═══════════════════════════════════════════════════════════
 -- TARGET SELECTION
 -- ═══════════════════════════════════════════════════════════
 local function getTarget(fovR,predMult,partName)
-  local vp=Camera.ViewportSize
-  local center=V2(vp.X*0.5,vp.Y*0.5)
-  local myTeam=LP.Team
+  local center=V2(Camera.ViewportSize.X*0.5, Camera.ViewportSize.Y*0.5)
   local best=nil; local bestScore=huge
   for _,plr in ipairs(Players:GetPlayers()) do
     if plr==LP then continue end
-    if CFG.ab_team and plr.Team==myTeam then continue end
+    if CFG.ab_team and plr.Team==LP.Team then continue end
+    
+    local prioState = CFG.player_priorities[plr.Name] or "Normal"
+    if prioState == "Ignore" then continue end
+    
     local char=plr.Character
-    if not char then continue end
-    local hum=char:FindFirstChildOfClass("Humanoid")
+    local hum=char and char:FindFirstChildOfClass("Humanoid")
     if not hum or hum.Health<=0 then continue end
-    local part=char:FindFirstChild(partName or CFG.ab_part) or char:FindFirstChild("HumanoidRootPart")
-    if not part then continue end
-    if CFG.ab_visible and not isVisible(part) then continue end
+    
+    local part=char:FindFirstChild(partName) or char:FindFirstChild("HumanoidRootPart")
+    if not part or (CFG.ab_visible and not isVisible(part)) then continue end
+    
     local pos=part.Position
     if predMult and predMult>0 and CFG.ab_predict then
       local root=char:FindFirstChild("HumanoidRootPart")
-      if root then
-        local vel=root.AssemblyLinearVelocity
-        pos=pos+V3(vel.X*predMult,vel.Y*predMult,vel.Z*predMult)
-      end
+      if root then pos = pos + root.AssemblyLinearVelocity * predMult end
     end
+    
     local sp,on=Camera:WorldToViewportPoint(pos)
     if not on or sp.Z<0 then continue end
-    local screenDist=(V2(sp.X,sp.Y)-center).Magnitude
-    if screenDist>fovR then continue end
-    local score
-    local pri=CFG.ab_priority
-    if pri=="hp" then score=hum.Health
-    elseif pri=="distance" then score=(part.Position-Camera.CFrame.Position).Magnitude
-    elseif pri=="manual" and CFG.ab_pinned then score=(plr==CFG.ab_pinned) and -huge or screenDist
-    else score=screenDist end
+    local dist=(V2(sp.X,sp.Y)-center).Magnitude
+    if dist>fovR then continue end
+    
+    local score = dist
+    if CFG.ab_priority == "hp" then score = hum.Health
+    elseif CFG.ab_priority == "distance" then score = (part.Position - Camera.CFrame.Position).Magnitude
+    elseif CFG.ab_priority == "manual" and CFG.ab_pinned == plr then score = -huge end
+    
+    if prioState == "High" then score = score - 5000 end
+    
     if score<bestScore then bestScore=score; best=pos end
   end
   return best
 end
 
--- ═══════════════════════════════════════════════════════════
--- FOV CIRCLE
--- ═══════════════════════════════════════════════════════════
-local fovCircle=Drawing.new("Circle")
-fovCircle.Color=Color3.fromRGB(160,80,255)
-fovCircle.Thickness=1
-fovCircle.Filled=false
-fovCircle.NumSides=64
-fovCircle.Visible=false
+local function getTargetChar(fovR)
+    local center = V2(Camera.ViewportSize.X*0.5, Camera.ViewportSize.Y*0.5)
+    local best = nil; local bestScore = huge
+    for _,plr in ipairs(Players:GetPlayers()) do
+        if plr==LP or (CFG.ab_team and plr.Team==LP.Team) then continue end
+        local prioState = CFG.player_priorities[plr.Name] or "Normal"
+        if prioState == "Ignore" then continue end
+        
+        local char = plr.Character
+        local hum = char and char:FindFirstChildOfClass("Humanoid")
+        if not hum or hum.Health <= 0 then continue end
+        local root = char:FindFirstChild("HumanoidRootPart")
+        if not root then continue end
+        
+        local sp, on = Camera:WorldToViewportPoint(root.Position)
+        if not on or sp.Z < 0 then continue end
+        local dist = (V2(sp.X, sp.Y) - center).Magnitude
+        local score = dist
+        if prioState == "High" then score = score - 5000 end
+        
+        if dist <= fovR and score < bestScore then bestScore = score; best = char end
+    end
+    return best
+end
 
 -- ═══════════════════════════════════════════════════════════
 -- AIMBOT & RAGE (STRAFE + KILL ALL)
@@ -604,72 +857,69 @@ fovCircle.Visible=false
 local strafeAngle = 0
 
 local function tickAimbot(dt)
-  -- RAGE KILL ALL (Teleports behind enemies sequentially)
-  if CFG.rage_kill_all and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
-      local target = getTarget(9999, 0, "HumanoidRootPart")
-      if target then
-          LP.Character.HumanoidRootPart.CFrame = CFrame.new(target + Vector3.new(0, 0, 4), target)
-          mouse:Button1Click() -- Auto swing/shoot
+  if Options.KA_Key:GetState() and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+      local targetChar = getTargetChar(9999)
+      if targetChar and targetChar:FindFirstChild("HumanoidRootPart") and targetChar:FindFirstChild("Head") then
+          local tHrp = targetChar.HumanoidRootPart
+          local tHead = targetChar.Head
+          local offset = CFrame.new(0,0,0)
+          local dist = CFG.rage_ka_dist
+          
+          if CFG.rage_ka_pos == "Behind" then offset = CFrame.new(0, 0, dist)
+          elseif CFG.rage_ka_pos == "Above" then offset = CFrame.new(0, dist, 0)
+          elseif CFG.rage_ka_pos == "Below" then offset = CFrame.new(0, -dist, 0)
+          elseif CFG.rage_ka_pos == "Front" then offset = CFrame.new(0, 0, -dist)
+          end
+          
+          local tpPos = (tHrp.CFrame * offset).Position
+          LP.Character.HumanoidRootPart.CFrame = CFrame.new(tpPos, tHead.Position)
+          Camera.CFrame = CFrame.new(Camera.CFrame.Position, tHead.Position)
+          mouse:Button1Click()
+          return
       end
   end
 
-  if not CFG.ab_on and not CFG.rage_strafe_on then return end
-  if CFG.ab_hold_key and not UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) and not CFG.rage_strafe_on then return end
-  if not LP.Character then return end
-  local pos=getTarget(CFG.ab_fov,CFG.ab_predmult,CFG.ab_part)
-  if not pos then return end
-  
-  -- RAGE STRAFE (Teleport around target while locked on)
-  if CFG.rage_strafe_on and UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) and LP.Character:FindFirstChild("HumanoidRootPart") then
-      strafeAngle = strafeAngle + CFG.rage_strafe_speed * dt
-      local offset = Vector3.new(math.cos(strafeAngle) * CFG.rage_strafe_range, math.sin(strafeAngle * 1.5) * (CFG.rage_strafe_range/2), math.sin(strafeAngle) * CFG.rage_strafe_range)
-      LP.Character.HumanoidRootPart.CFrame = CFrame.new(pos + offset, pos)
+  if Options.StrafeKey:GetState() and LP.Character and LP.Character:FindFirstChild("HumanoidRootPart") then
+      local targetChar = getTargetChar(CFG.ab_fov)
+      if targetChar and targetChar:FindFirstChild("HumanoidRootPart") and targetChar:FindFirstChild("Head") then
+          strafeAngle = strafeAngle + CFG.rage_strafe_speed * dt
+          local tHrp = targetChar.HumanoidRootPart
+          local offset = Vector3.new(math.cos(strafeAngle) * CFG.rage_strafe_range, math.sin(strafeAngle * 1.5) * (CFG.rage_strafe_range/3), math.sin(strafeAngle) * CFG.rage_strafe_range)
+          
+          LP.Character.HumanoidRootPart.CFrame = CFrame.new(tHrp.Position + offset, targetChar.Head.Position)
+          Camera.CFrame = CFrame.new(Camera.CFrame.Position, targetChar.Head.Position)
+          if CFG.rage_auto_shoot then mouse:Button1Click() end
+          return
+      end
   end
 
-  local jx,jy=0,0
-  if CFG.ab_jitter then
-    local m=CFG.ab_jitter_mag; jx=(mra()*2-1)*m*0.01; jy=(mra()*2-1)*m*0.01
-  end
-  local camPos=Camera.CFrame.Position
-  local targetCF=CF(camPos,pos+V3(jx,jy,0))
+  if not CFG.ab_on then return end
+  if CFG.ab_hold_key and not UIS:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then return end
+  if not LP.Character then return end
   
-  -- Hard Lock skips smoothing
-  if CFG.ab_hard_lock then
-      Camera.CFrame = targetCF
-      return
-  end
+  local pos = getTarget(CFG.ab_fov, CFG.ab_predmult, CFG.ab_part)
+  if not pos then return end
   
-  if not CFG.ab_axis_x or not CFG.ab_axis_y then
-    local curCF=Camera.CFrame
-    local tx,ty,tz=targetCF:ToEulerAnglesYXZ(); local cx,cy,_=curCF:ToEulerAnglesYXZ()
-    if not CFG.ab_axis_x then ty=cy end
-    if not CFG.ab_axis_y then tx=cx end
-    targetCF=CF(camPos)*CFrame.fromEulerAnglesYXZ(tx,ty,tz)
-  end
-  local maxRad=math.rad(CFG.ab_max_speed)*dt
-  local curCF=Camera.CFrame
-  local angle=math.acos(mcl(curCF.LookVector:Dot(targetCF.LookVector),-1,1))
-  local lerpT=CFG.ab_smooth
-  if angle>maxRad then lerpT=mcl(maxRad/angle,0,lerpT) end
-  Camera.CFrame=curCF:Lerp(targetCF,lerpT)
+  local targetCF = CFrame.new(Camera.CFrame.Position, pos)
+  if CFG.ab_hard_lock then Camera.CFrame = targetCF; return end
+  
+  local maxRad = math.rad(CFG.ab_max_speed) * dt
+  local angle = math.acos(mcl(Camera.CFrame.LookVector:Dot(targetCF.LookVector), -1, 1))
+  local lerpT = CFG.ab_smooth
+  if angle > maxRad then lerpT = mcl(maxRad / angle, 0, lerpT) end
+  Camera.CFrame = Camera.CFrame:Lerp(targetCF, lerpT)
 end
 
 -- ═══════════════════════════════════════════════════════════
--- TRIGGERBOT & RAGE AUTO SHOOT
+-- TRIGGERBOT
 -- ═══════════════════════════════════════════════════════════
 local tbLastFire=0
 
 local function tickTriggerbot()
-  if CFG.rage_auto_shoot then
-      local pos = getTarget(9999, 0, "Head")
-      if pos then mouse:Button1Click() end
-  end
-
   if not CFG.tb_on then return end
   local now=tick()
   if (now-tbLastFire)<(CFG.tb_delay/1000) then return end
   
-  -- Center screen raycast (Ensures it ONLY shoots when crosshair is exactly on the enemy)
   local ray = Camera:ScreenPointToRay(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
   local hit = workspace:FindPartOnRayWithIgnoreList(Ray.new(ray.Origin, ray.Direction * 1000), {LP.Character})
   
@@ -684,25 +934,129 @@ local function tickTriggerbot()
 end
 
 -- ═══════════════════════════════════════════════════════════
--- ARSENAL ADVANCED WEAPON MODS (ReplicatedStorage)
+-- ARSENAL SILENT AIM, TRACERS & HIT SOUND HOOK
 -- ═══════════════════════════════════════════════════════════
-RunService.Heartbeat:Connect(function()
-    if not ReplicatedStorage:FindFirstChild("Weapons") then return end
+local function createTracer(origin, target)
+    if not CFG.tracers_on then return end
+    local tracer = Drawing.new("Line")
+    tracer.Visible = true; tracer.Color = CFG.tracers_col; tracer.Thickness = 2; tracer.Transparency = 1
+    local spO, onO = Camera:WorldToViewportPoint(origin)
+    local spT, onT = Camera:WorldToViewportPoint(target)
+    if onO and onT then
+        tracer.From = V2(spO.X, spO.Y); tracer.To = V2(spT.X, spT.Y)
+        task.spawn(function() for i = 1, 0, -0.1 do tracer.Transparency = i; task.wait(0.02) end; tracer:Remove() end)
+    else tracer:Remove() end
+end
+
+local saHookInstalled = false
+local oldNamecall = nil
+
+task.defer(function()
+    if saHookInstalled then return end
+    if not hookmetamethod then return end
     
-    for _, weapon in ipairs(ReplicatedStorage.Weapons:GetChildren()) do
-        if CFG.inf_ammo_on then
-            if weapon:FindFirstChild("Ammo") then weapon.Ammo.Value = 999 end
-            if weapon:FindFirstChild("MaxAmmo") then weapon.MaxAmmo.Value = 999 end
+    oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
+        local method = getnamecallmethod()
+        local args = {...}
+        
+        if CFG.sa_on and not checkcaller() and mra(1,100) <= CFG.sa_hitpct then
+            local pn = mra(1,100) <= CFG.sa_headpct and "Head" or "Torso"
+            local pos = getTarget(CFG.sa_fov, CFG.sa_predmult, pn)
+            
+            if pos then
+                if method == "Raycast" then
+                    args[2] = (pos - args[1]).Unit * args[2].Magnitude
+                    createTracer(args[1], pos); playHitSound()
+                    return oldNamecall(self, unpack(args))
+                elseif method == "FindPartOnRayWithIgnoreList" or method == "FindPartOnRay" then
+                    local origin = args[1].Origin
+                    args[1] = Ray.new(origin, (pos - origin).Unit * args[1].Direction.Magnitude)
+                    createTracer(origin, pos); playHitSound()
+                    return oldNamecall(self, unpack(args))
+                elseif method == "FireServer" and tostring(self) == "HitPart" then
+                    local targetChar = getTargetChar(CFG.sa_fov)
+                    if targetChar and targetChar:FindFirstChild(pn) then args[1] = targetChar[pn] end
+                    return oldNamecall(self, unpack(args))
+                end
+            end
         end
-        if CFG.rapid_fire_on and weapon:FindFirstChild("FireRate") then
-            weapon.FireRate.Value = 1 / CFG.rapid_fire_rate
+        return oldNamecall(self, ...)
+    end)
+    saHookInstalled = true
+end)
+
+-- Arsenal Specific Network Hook (Secondary)
+task.spawn(function()
+    local pfNetwork = nil; local pfHooked = false
+    while not pfHooked do
+        local ok, nils = pcall(getnilinstances)
+        if ok and nils then
+            for _, inst in ipairs(nils) do
+                if inst.Name == "ClientLoader" and inst:IsA("LocalScript") then
+                    local env = getsenv(inst)
+                    if env and type(env.shared) == "table" and type(env.shared.require) == "function" then
+                        pcall(function() pfNetwork = env.shared.require("NetworkClient") end)
+                        if pfNetwork then
+                            local origSend = pfNetwork.send
+                            pfNetwork.send = function(self, name, ...)
+                                if name == "newbullets" and CFG.sa_on and mra(1,100) <= CFG.sa_hitpct then
+                                    local pos = getTarget(CFG.sa_fov, CFG.sa_predmult, mra(1,100) <= CFG.sa_headpct and "Head" or "Torso")
+                                    if pos then
+                                        local a, data, time, b = ...
+                                        if type(data) == "table" and data.bullets and data.firepos then
+                                            local spd = data.bullets[1] and data.bullets[1][1]
+                                            if spd then
+                                                local dir = (pos - data.firepos).Unit * spd.Magnitude
+                                                for i=1, #data.bullets do data.bullets[i][1] = dir end
+                                            end
+                                            return origSend(self, name, a, data, time, b)
+                                        end
+                                    end
+                                end
+                                return origSend(self, name, ...)
+                            end
+                            pfHooked = true
+                        end
+                    end
+                end
+            end
         end
-        if CFG.no_recoil_on then
-            if weapon:FindFirstChild("RecoilControl") then weapon.RecoilControl.Value = 0 end
-            if weapon:FindFirstChild("Spread") then weapon.Spread.Value = 0 end
+        task.wait(3)
+    end
+end)
+
+-- ═══════════════════════════════════════════════════════════
+-- SMART WALLBANG & ADVANCED MODS
+-- ═══════════════════════════════════════════════════════════
+local wallbangParts = {}
+RunService.Heartbeat:Connect(function()
+    if CFG.smart_wallbang then
+        local ray = Ray.new(Camera.CFrame.Position, Camera.CFrame.LookVector * 200)
+        local hit = workspace:FindPartOnRayWithIgnoreList(ray, {LP.Character})
+        if hit and hit.CanCollide and not hit.Parent:FindFirstChild("Humanoid") and not hit.Parent.Parent:FindFirstChild("Humanoid") then
+            hit.CanCollide = false
+            hit.Transparency = 0.8
+            table.insert(wallbangParts, hit)
+            task.delay(1.5, function() if hit then hit.CanCollide = true; hit.Transparency = 0 end end)
         end
-        if CFG.wallbang_on and weapon:FindFirstChild("Penetration") then
-            weapon.Penetration.Value = 999
+    end
+
+    if ReplicatedStorage:FindFirstChild("Weapons") then
+        for _, weapon in ipairs(ReplicatedStorage.Weapons:GetChildren()) do
+            if CFG.inf_ammo_on then
+                if weapon:FindFirstChild("Ammo") then weapon.Ammo.Value = 999 end
+                if weapon:FindFirstChild("MaxAmmo") then weapon.MaxAmmo.Value = 999 end
+            end
+            if CFG.rapid_fire_on and weapon:FindFirstChild("FireRate") then
+                weapon.FireRate.Value = 1 / CFG.rapid_fire_rate
+            end
+            if CFG.no_recoil_on then
+                if weapon:FindFirstChild("RecoilControl") then weapon.RecoilControl.Value = 0 end
+                if weapon:FindFirstChild("Spread") then weapon.Spread.Value = 0 end
+            end
+            if CFG.wallbang_on and weapon:FindFirstChild("Penetration") then
+                weapon.Penetration.Value = 999
+            end
         end
     end
 end)
@@ -748,7 +1102,6 @@ task.spawn(function()
     elseif not CFG.fly_on and flyWasOn then flyStop(); flyWasOn=false end
   end
 end)
-LP.CharacterAdded:Connect(function() task.wait(0.5); flyWasOn=false; if CFG.fly_on then flyStart(); flyWasOn=true end end)
 
 -- ═══════════════════════════════════════════════════════════
 -- NOCLIP
@@ -765,7 +1118,6 @@ local function noclipStart()
     end
   end)
 end
-
 local function noclipStop()
   if ncConn then ncConn:Disconnect(); ncConn=nil end
   local char=LP.Character; if not char then return end
@@ -780,7 +1132,6 @@ task.spawn(function()
     elseif not CFG.nc_on and ncWasOn then noclipStop(); ncWasOn=false end
   end
 end)
-LP.CharacterAdded:Connect(function() task.wait(0.5); if CFG.nc_on then noclipStart() end end)
 
 -- ═══════════════════════════════════════════════════════════
 -- ANTI-AIM 
@@ -813,81 +1164,6 @@ task.spawn(function()
     elseif not CFG.aa_on and aaWasOn then aaStop(); aaWasOn=false end
   end
 end)
-LP.CharacterAdded:Connect(function() task.wait(0.5); aaAngle=0; if CFG.aa_on then aaStart() end end)
-
--- ═══════════════════════════════════════════════════════════
--- SILENT AIM (Arsenal pfNetwork hook)
--- ═══════════════════════════════════════════════════════════
-local pfNetwork=nil; local pfBullet=nil; local pfPubSettings=nil
-local pfHooked=false; local origSend=nil; local origNewBullet=nil
-local saRoll=100; local saHead=0
-
-task.spawn(function() while true do task.wait(0.08); saRoll=mra(1,100); saHead=mra(1,100) end end)
-
-local function solveVel(origin,accel,target,speed)
-  local f=-accel; local ld=target-origin; local a=f:Dot(f)
-  if a==0 then return (target-origin).Unit*speed end
-  local k=(4*(f:Dot(ld)+speed*speed))/(2*a)
-  local disc=math.max(0,k*k-(4*(ld:Dot(ld)))/a)
-  local sq=disc^0.5; local t1,t2=k-sq,k+sq
-  local t=(t1>=0) and t1 or t2; t=math.max(t,0.001)^0.5
-  return f*t/2+ld/t
-end
-
-local function installHooks()
-  if pfHooked or not pfNetwork or not pfBullet then return end
-  local bulletAccel=(pfPubSettings and pfPubSettings.bulletAcceleration) or V3(0,-workspace.Gravity*0.45,0)
-  origSend=pfNetwork.send; origNewBullet=pfBullet.new
-  function pfNetwork:send(name,...)
-    if name=="newbullets" and CFG.sa_on and saRoll<=CFG.sa_hitpct then
-      local pn=saHead<=CFG.sa_headpct and "Head" or "Torso"
-      local pos=getTarget(CFG.sa_fov,CFG.sa_predmult,pn)
-      if pos then
-        local a,data,time,b=...
-        if type(data)=="table" and data.bullets and data.firepos then
-          local spd=data.bullets[1] and data.bullets[1][1]
-          if spd then
-            local vel=solveVel(data.firepos,bulletAccel,pos,spd.Magnitude)
-            for i=1,#data.bullets do data.bullets[i][1]=vel end
-          end
-          return origSend(self,name,a,data,time,b)
-        end
-      end
-    end
-    return origSend(self,name,...)
-  end
-  function pfBullet.new(data)
-    if CFG.sa_on and data.onplayerhit and saRoll<=CFG.sa_hitpct then
-      local pn=saHead<=CFG.sa_headpct and "Head" or "Torso"
-      local pos=getTarget(CFG.sa_fov,CFG.sa_predmult,pn)
-      if pos and data.position and data.velocity then
-        data.velocity=solveVel(data.position,bulletAccel,pos,data.velocity.Magnitude)
-      end
-    end
-    return origNewBullet(data)
-  end
-  pfHooked=true;
-end
-
-local function loadPFModules()
-  local sharedEnv=nil; local ok,nils=pcall(getnilinstances)
-  if ok and nils then
-    for i=1,#nils do
-      local inst=nils[i]
-      if inst.Name=="ClientLoader" and inst:IsA("LocalScript") then
-        local env=getsenv(inst)
-        if env and type(env.shared)=="table" and type(env.shared.require)=="function" then sharedEnv=env.shared; break end
-      end
-    end
-  end
-  if not sharedEnv then task.delay(3,loadPFModules); return end
-  local req=sharedEnv.require
-  pcall(function() pfNetwork=req("NetworkClient") end)
-  pcall(function() pfBullet=req("BulletObject") end)
-  pcall(function() pfPubSettings=req("PublicSettings") end)
-  if pfNetwork and pfBullet then installHooks() else task.delay(3,loadPFModules) end
-end
-task.delay(7,loadPFModules)
 
 -- ═══════════════════════════════════════════════════════════
 -- BHOP / INF JUMP
@@ -900,40 +1176,35 @@ UIS.JumpRequest:Connect(function()
 end)
 
 -- ═══════════════════════════════════════════════════════════
--- WORLD VISUALS & CROSSHAIR
+-- MAIN RENDER LOOP (ESP, CHAMS, ARROWS, CROSSHAIR)
 -- ═══════════════════════════════════════════════════════════
+local fovCircle=Drawing.new("Circle"); fovCircle.Color=Color3.fromRGB(160,80,255); fovCircle.Thickness=1; fovCircle.Filled=false; fovCircle.NumSides=64; fovCircle.Visible=false
 local CH_LINES={}
 for i=1,8 do
   local l=Drawing.new("Line"); l.Thickness=CFG.ch_thick; l.Color=Color3.fromRGB(160,80,255)
   l.Visible=false; l.ZIndex=999; CH_LINES[i]=l
 end
-local SW_SEGS={
-  {0,0,0,-1,0,-1,1,-1},{0,0,1,0,1,0,1,1},
-  {0,0,0,1,0,1,-1,1},{0,0,-1,0,-1,0,-1,-1},
-}
+local SW_SEGS={{0,0,0,-1,0,-1,1,-1},{0,0,1,0,1,0,1,1},{0,0,0,1,0,1,-1,1},{0,0,-1,0,-1,0,-1,-1}}
 local chAngle=0; local chHue=0
 
-RunService.RenderStepped:Connect(function()
+local _playerList={}
+RunService.RenderStepped:Connect(function(dt)
+  if CFG.menu_rgb then ThemeManager:SetCustomTheme({Accent = Color3.fromHSV(tick() % 5 / 5, 1, 1)}) end
   if CFG.fov_on then Camera.FieldOfView=CFG.fov_val end
-  if CFG.fullbright_on then
-    game.Lighting.Ambient=Color3.new(1,1,1); game.Lighting.OutdoorAmbient=Color3.new(1,1,1); game.Lighting.Brightness=2
-  end
+  if CFG.fullbright_on then game.Lighting.Ambient=Color3.new(1,1,1); game.Lighting.OutdoorAmbient=Color3.new(1,1,1); game.Lighting.Brightness=2 end
   if CFG.nofog_on then game.Lighting.FogEnd=1e6 end
   if LP.Character and LP.Character:FindFirstChildOfClass("Humanoid") then
       if CFG.spd_on then LP.Character.Humanoid.WalkSpeed = CFG.spd_val end
       if CFG.jp_on then LP.Character.Humanoid.JumpPower = CFG.jp_val end
   end
-end)
 
--- ═══════════════════════════════════════════════════════════
--- MAIN RENDER LOOP (ESP + HP BAR)
--- ═══════════════════════════════════════════════════════════
-local _playerList={}
-RunService.RenderStepped:Connect(function(dt)
   local vp=Camera.ViewportSize
   local cx=vp.X*0.5; local cy=vp.Y*0.5
   local snapOrigin=V2(cx,vp.Y)
 
+  updateChams()
+  updateArrows()
+  
   local n=0
   for _,p in ipairs(Players:GetPlayers()) do n=n+1; _playerList[n]=p end
   for i=n+1,#_playerList do _playerList[i]=nil end
@@ -964,29 +1235,21 @@ RunService.RenderStepped:Connect(function(dt)
         e.nameText.Position=V2(box.cx-30,tl.Y-16)
         e.nameText.Color=CFG.esp_name_col; e.nameText.Visible=true
         
-        -- HP Text
         if CFG.esp_hp_text_on then
             e.hpText.Text=tostring(box.hp).." HP"
             e.hpText.Position=V2(box.cx-14,tl.Y-28)
             e.hpText.Color=Color3.fromHSV(box.hpPct*0.33,1,1); e.hpText.Visible=true
         else e.hpText.Visible=false end
         
-        -- HP Bar
         if CFG.esp_hp_bar_on then
             local barHeight = br.Y - tr.Y
             local barX = tr.X + 4
-            e.hpBarBg.From = V2(barX, tr.Y)
-            e.hpBarBg.To = V2(barX, br.Y)
-            e.hpBarBg.Visible = true
-            
+            e.hpBarBg.From = V2(barX, tr.Y); e.hpBarBg.To = V2(barX, br.Y); e.hpBarBg.Visible = true
             local hpOffset = barHeight * (1 - box.hpPct)
-            e.hpBarFill.From = V2(barX, br.Y)
-            e.hpBarFill.To = V2(barX, tr.Y + hpOffset)
-            e.hpBarFill.Color = Color3.fromHSV(box.hpPct * 0.33, 1, 1)
-            e.hpBarFill.Visible = true
+            e.hpBarFill.From = V2(barX, br.Y); e.hpBarFill.To = V2(barX, tr.Y + hpOffset)
+            e.hpBarFill.Color = Color3.fromHSV(box.hpPct * 0.33, 1, 1); e.hpBarFill.Visible = true
         else e.hpBarBg.Visible = false; e.hpBarFill.Visible = false end
 
-        -- Distance Label (Moved to Bottom)
         if CFG.esp_dist_on then
           e.distText.Text=box.dist.." st"
           e.distText.Position=V2(box.cx-10, br.Y + 2)
@@ -1019,7 +1282,17 @@ RunService.RenderStepped:Connect(function(dt)
   fovCircle.Visible=CFG.ab_showfov
 
   tickAimbot(dt)
-  tickTriggerbot()
+  
+  if CFG.tb_on and Options.TriggerKey:GetState() then
+      local ray = Camera:ScreenPointToRay(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+      local hit = workspace:FindPartOnRayWithIgnoreList(Ray.new(ray.Origin, ray.Direction * 1000), {LP.Character})
+      if hit and hit.Parent and (tick() - tbLastFire) >= (CFG.tb_delay / 1000) then
+          local plr = Players:GetPlayerFromCharacter(hit.Parent) or Players:GetPlayerFromCharacter(hit.Parent.Parent)
+          if plr and plr ~= LP and not (CFG.tb_team and plr.Team == LP.Team) then
+              mouse:Button1Click(); tbLastFire = tick()
+          end
+      end
+  end
 
   chAngle=chAngle+CFG.ch_rot_speed*dt
   chHue=(chHue+CFG.ch_hue_speed*dt)%1
@@ -1039,23 +1312,3 @@ RunService.RenderStepped:Connect(function(dt)
   
   updateKeybindsUI()
 end)
-
--- ═══════════════════════════════════════════════════════════
--- KEYBINDS
--- ═══════════════════════════════════════════════════════════
-UIS.InputBegan:Connect(function(inp,gp)
-  if gp then return end
-  local kc=inp.KeyCode
-  if kc==Enum.KeyCode.RightShift then
-    Library:Toggle()
-  elseif kc==Enum.KeyCode.F then
-    CFG.fly_on=not CFG.fly_on
-  elseif kc==Enum.KeyCode.V then
-    CFG.nc_on=not CFG.nc_on
-  elseif kc==Enum.KeyCode.H then
-    CFG.aa_on=not CFG.aa_on
-  elseif kc==Enum.KeyCode.CapsLock then
-    CFG.tb_on=not CFG.tb_on
-  end
-end)
-
